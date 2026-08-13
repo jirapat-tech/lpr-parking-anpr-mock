@@ -410,8 +410,6 @@ const remember = (outcome) => {
   ])
 }
 
-const OUTCOME_CLASS = { delivered: "ok", "blocked?": "warn", failed: "err" }
-
 const renderHistory = () => {
   const entries = readHistory()
   $("historyHint").textContent = entries.length ? t("hint.historyCount", { n: entries.length }) : ""
@@ -419,13 +417,11 @@ const renderHistory = () => {
     ? entries
         .map((entry, index) => {
           const time = new Date(entry.ts).toLocaleString()
-          const state = OUTCOME_CLASS[entry.outcome] ?? "ok"
           return `<div class="hrow">
             <span class="htime">${esc(time)}</span>
             <span class="hplate">${esc(entry.plate || "—")}</span>
             <span class="hprov">${esc(entry.province || "—")}${entry.stateId ? ` <i>#${esc(entry.stateId)}</i>` : ""}</span>
             <span class="hpics">${entry.pictures} <i>img</i></span>
-            <span class="hout ${state}">${esc(entry.outcome)}</span>
             <button class="link" type="button" data-restore="${index}">${esc(t("btn.restore"))}</button>
           </div>`
         })

@@ -369,18 +369,6 @@ select.lang {
   color: var(--dim);
   white-space: nowrap;
 }
-.hout {
-  white-space: nowrap;
-}
-.hout.ok {
-  color: var(--ok);
-}
-.hout.warn {
-  color: var(--warn);
-}
-.hout.err {
-  color: var(--err);
-}
 
 .result.warn {
   border-color: var(--warn);
