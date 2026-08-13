@@ -61,6 +61,93 @@ const DEFAULT_XML = `<?xml version="1.0" encoding="utf-8"?>
   <deviceUUID>DS-TCG406-E 20241223AIFU6460824</deviceUUID>
 </EventNotificationAlert>`
 
+/**
+ * Thailand province code table — [tailandStateID, code, English, Thai].
+ * Generated from the desktop app's license-plate-city seed and cross-checked
+ * against ThailandProvinceCode in the Hikvision SDK types; both agree on all 78
+ * entries. The camera reports the number, so that is what goes in the XML.
+ */
+const PROVINCES = [
+  [1, "BKK", "Bangkok", "กรุงเทพมหานคร"],
+  [2, "KBI", "Krabi", "กระบี่"],
+  [3, "KRI", "Kanchanaburi", "กาญจนบุรี"],
+  [4, "KSN", "Kalasin", "กาฬสินธุ์"],
+  [5, "KPT", "Kamphaeng Phet", "กำแพงเพชร"],
+  [6, "KKN", "Khon Kaen", "ขอนแก่น"],
+  [7, "CTI", "Chanthaburi", "จันทบุรี"],
+  [8, "CCO", "Chachoengsao", "ฉะเชิงเทรา"],
+  [9, "CBI", "Chonburi", "ชลบุรี"],
+  [10, "CNT", "Chai Nat", "ชัยนาท"],
+  [11, "CPM", "Chaiyaphum", "ชัยภูมิ"],
+  [12, "CPN", "Chumphon", "ชุมพร"],
+  [13, "CRI", "Chiang Rai", "เชียงราย"],
+  [14, "CMI", "Chiang Mai", "เชียงใหม่"],
+  [15, "TRG", "Trang", "ตรัง"],
+  [16, "TRT", "Trat", "ตราด"],
+  [17, "TAK", "Tak", "ตาก"],
+  [18, "NYK", "Nakhon Nayok", "นครนายก"],
+  [19, "NPT", "Nakhon Pathom", "นครปฐม"],
+  [20, "NPM", "Nakhon Phanom", "นครพนม"],
+  [21, "NMA", "Nakhon Ratchasima", "นครราชสีมา"],
+  [22, "NRT", "Nakhon Si Thammarat", "นครศรีธรรมราช"],
+  [23, "NSN", "Nakhon Sawan", "นครสวรรค์"],
+  [24, "NBI", "Nonthaburi", "นนทบุรี"],
+  [25, "NWT", "Narathiwat", "นราธิวาส"],
+  [26, "NAN", "Nan", "น่าน"],
+  [27, "BKN", "Bueng Kan", "บึงกาฬ"],
+  [28, "BRM", "Buri Ram", "บุรีรัมย์"],
+  [29, "PTE", "Pathum Thani", "ปทุมธานี"],
+  [30, "PKN", "Prachuap Khiri Khan", "ประจวบคีรีขันธ์"],
+  [31, "PRI", "Prachin Buri", "ปราจีนบุรี"],
+  [32, "PTN", "Pattani", "ปัตตานี"],
+  [33, "AYA", "Phra Nakhon Si Ayutthaya", "พระนครศรีอยุธยา"],
+  [34, "PNA", "Phang Nga", "พังงา"],
+  [35, "PLG", "Phatthalung", "พัทลุง"],
+  [36, "PCT", "Phichit", "พิจิตร"],
+  [37, "PLK", "Phitsanulok", "พิษณุโลก"],
+  [38, "PBI", "Phetchaburi", "เพชรบุรี"],
+  [39, "PNB", "Phetchabun", "เพชรบูรณ์"],
+  [40, "PRE", "Phrae", "แพร่"],
+  [41, "PYO", "Phayao", "พะเยา"],
+  [42, "PKT", "Phuket", "ภูเก็ต"],
+  [43, "MKM", "Maha Sarakham", "มหาสารคาม"],
+  [44, "MDH", "Mukdahan", "มุกดาหาร"],
+  [45, "MSN", "Mae Hong Son", "แม่ฮ่องสอน"],
+  [46, "YLA", "Yala", "ยะลา"],
+  [47, "YST", "Yasothon", "ยโสธร"],
+  [48, "RET", "Roi Et", "ร้อยเอ็ด"],
+  [49, "RNG", "Ranong", "ระนอง"],
+  [50, "RYG", "Rayong", "ระยอง"],
+  [51, "RBR", "Ratchaburi", "ราชบุรี"],
+  [52, "LRI", "Lop Buri", "ลพบุรี"],
+  [53, "LPG", "Lampang", "ลำปาง"],
+  [54, "LPN", "Lamphun", "ลำพูน"],
+  [55, "LEI", "Loei", "เลย"],
+  [56, "SSK", "Sisaket", "ศรีสะเกษ"],
+  [57, "SNK", "Sakon Nakhon", "สกลนคร"],
+  [58, "SKA", "Songkhla", "สงขลา"],
+  [59, "STN", "Satun", "สตูล"],
+  [60, "SPK", "Samut Prakan", "สมุทรปราการ"],
+  [61, "SKM", "Samut Songkhram", "สมุทรสงคราม"],
+  [62, "SKN", "Samut Sakhon", "สมุทรสาคร"],
+  [63, "SKW", "Sa Kaeo", "สระแก้ว"],
+  [64, "SRI", "Saraburi", "สระบุรี"],
+  [65, "SBR", "Sing Buri", "สิงห์บุรี"],
+  [66, "STI", "Sukhothai", "สุโขทัย"],
+  [67, "SPB", "Suphan Buri", "สุพรรณบุรี"],
+  [68, "SNI", "Surat Thani", "สุราษฎร์ธานี"],
+  [69, "SRN", "Surin", "สุรินทร์"],
+  [70, "NKI", "Nong Khai", "หนองคาย"],
+  [71, "NBP", "Nong Bua Lam Phu", "หนองบัวลำภู"],
+  [72, "ATG", "Ang Thong", "อ่างทอง"],
+  [73, "UDN", "Udon Thani", "อุดรธานี"],
+  [74, "UTI", "Uthai Thani", "อุทัยธานี"],
+  [75, "UTT", "Uttaradit", "อุตรดิตถ์"],
+  [76, "UBN", "Ubon Ratchathani", "อุบลราชธานี"],
+  [77, "ACR", "Amnat Charoen", "อำนาจเจริญ"],
+  [78, "BTG", "Betong", "เบตง"],
+]
+
 const $ = (id) => document.getElementById(id)
 const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c])
 
@@ -75,6 +162,50 @@ const parsePids = (xml) =>
       fileName: block.match(/<fileName>([\s\S]*?)<\/fileName>/)?.[1]?.trim() ?? "",
     }))
     .filter((entry) => entry.pId)
+
+// ─── plate + province fields ───────────────────────────────────────────────
+
+const getTag = (xml, tag) => xml.match(new RegExp(`<${tag}>([\\s\\S]*?)</${tag}>`))?.[1]?.trim() ?? ""
+const setTag = (xml, tag, value) =>
+  xml.replace(new RegExp(`(<${tag}>)[\\s\\S]*?(</${tag}>)`, "g"), `$1${esc(value)}$2`)
+
+const fillProvinces = () => {
+  $("province").innerHTML = PROVINCES.map(
+    ([n, code, en, th]) => `<option value="${n}">${n} · ${th} — ${en} (${code})</option>`
+  ).join("")
+}
+
+/** XML is the source of truth: the two fields are just a friendlier way in. */
+const fieldsFromXml = () => {
+  const xml = $("xml").value
+  $("plate").value = getTag(xml, "licensePlate")
+
+  const stateId = getTag(xml, "tailandStateID")
+  const known = PROVINCES.some(([n]) => String(n) === stateId)
+  $("province").value = known ? stateId : ""
+  $("stateHint").textContent = known
+    ? `tailandStateID = ${stateId}`
+    : `tailandStateID = ${stateId || "(empty)"} — not in the table`
+}
+
+const fieldsToXml = () => {
+  let xml = $("xml").value
+  // The camera sends the same value in both, so keep them consistent.
+  xml = setTag(xml, "licensePlate", $("plate").value)
+  xml = setTag(xml, "originalLicensePlate", $("plate").value)
+  xml = setTag(xml, "tailandStateID", $("province").value)
+  $("xml").value = xml
+  save()
+  fieldsFromXml()
+}
+
+// ─── theme ─────────────────────────────────────────────────────────────────
+
+const applyTheme = (theme) => {
+  document.documentElement.dataset.theme = theme
+  $("theme").textContent = theme === "dark" ? "☾" : "☀"
+  localStorage.setItem("anpr-theme", theme)
+}
 
 // ─── persistence ───────────────────────────────────────────────────────────
 
@@ -252,21 +383,29 @@ const curlCommand = () => {
 
 // ─── wiring ────────────────────────────────────────────────────────────────
 
+applyTheme(localStorage.getItem("anpr-theme") || "light")
+fillProvinces()
 load()
+fieldsFromXml()
 renderPids()
 checkEnv()
 
+$("theme").onclick = () => applyTheme(document.documentElement.dataset.theme === "dark" ? "light" : "dark")
+$("plate").oninput = fieldsToXml
+$("province").onchange = fieldsToXml
 $("url").oninput = () => {
   save()
   checkEnv()
 }
 $("xml").oninput = () => {
   save()
+  fieldsFromXml()
   renderPids()
 }
 $("resetXml").onclick = () => {
   $("xml").value = DEFAULT_XML
   save()
+  fieldsFromXml()
   renderPids()
 }
 $("downloadXml").onclick = () => {

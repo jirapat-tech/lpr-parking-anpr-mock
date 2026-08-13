@@ -1,4 +1,22 @@
+/* Light is the default palette; dark only redefines the tokens. */
 :root {
+  --bg: #ffffff;
+  --panel: #f6f8fa;
+  --border: #d0d7de;
+  --txt: #1f2328;
+  --dim: #57606a;
+  --faint: #8c959f;
+  --ok: #1a7f37;
+  --err: #cf222e;
+  --warn: #9a6700;
+  --warn-bg: #fff8c5;
+  --warn-border: #d4a72c;
+  --warn-txt: #4d3800;
+  --err-txt: #82071e;
+  --thumb-bg: #eaeef2;
+}
+
+:root[data-theme="dark"] {
   --bg: #0d1117;
   --panel: #161b22;
   --border: #30363d;
@@ -8,6 +26,11 @@
   --ok: #3fb950;
   --err: #f85149;
   --warn: #d29922;
+  --warn-bg: #2a1f0a;
+  --warn-border: #d29922;
+  --warn-txt: #f0d9a8;
+  --err-txt: #f8b8b4;
+  --thumb-bg: #0a0d12;
 }
 
 * {
@@ -40,6 +63,12 @@ header h1 {
 header .sub {
   color: var(--faint);
   font-size: 11px;
+  flex: 1;
+}
+button.icon {
+  padding: 4px 10px;
+  font-size: 13px;
+  line-height: 1;
 }
 
 main {
@@ -124,14 +153,15 @@ button.link:hover {
 .warn {
   margin: 0;
   padding: 11px 20px;
-  background: #2a1f0a;
-  border-bottom: 1px solid var(--warn);
-  color: #f0d9a8;
+  background: var(--warn-bg);
+  border-bottom: 1px solid var(--warn-border);
+  color: var(--warn-txt);
   font-size: 11.5px;
   line-height: 1.7;
 }
 .warn code {
-  color: #fff;
+  color: var(--warn);
+  font-weight: 600;
 }
 .hidden {
   display: none;
@@ -156,7 +186,7 @@ button.link:hover {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #0a0d12;
+  background: var(--thumb-bg);
 }
 .thumb.empty {
   color: var(--faint);
@@ -232,5 +262,29 @@ button.link:hover {
 }
 .result.err {
   border-color: var(--err);
-  color: #f8b8b4;
+  color: var(--err-txt);
+}
+
+.row2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+@media (max-width: 640px) {
+  .row2 {
+    grid-template-columns: 1fr;
+  }
+}
+select {
+  width: 100%;
+  background: var(--panel);
+  color: var(--txt);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 9px 11px;
+  font: inherit;
+}
+select:focus {
+  outline: none;
+  border-color: var(--dim);
 }

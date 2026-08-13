@@ -10,12 +10,29 @@ Static — three files, no build, no dependencies.
 ## Use
 
 1. Set the listener URL.
-2. Edit `anpr.xml` (adding or removing `<pictureInfo>` blocks updates the picture list live).
-3. Attach an image per picture. Missing ones are omitted, not faked.
-4. **Fire request.**
+2. Set the **license plate** and pick a **province**.
+3. Edit `anpr.xml` directly if you need anything else (adding or removing
+   `<pictureInfo>` blocks updates the picture list live).
+4. Attach an image per picture. Missing ones are omitted, not faked.
+5. **Fire request.**
 
-The URL and XML persist in `localStorage`. Images are held in memory only, so a
-reload clears them.
+The URL, XML, and theme persist in `localStorage`. Images are held in memory
+only, so a reload clears them. Light theme by default; toggle in the header.
+
+### Plate and province fields
+
+The XML is the source of truth — those two inputs are just a faster way in, and
+edits flow both ways.
+
+- **License plate** writes both `<licensePlate>` and `<originalLicensePlate>`,
+  since a real camera sends the same value in both.
+- **Province** writes `<tailandStateID>`. The dropdown carries all 78 codes,
+  generated from the desktop app's `license-plate-city` seed and cross-checked
+  against `ThailandProvinceCode` in the Hikvision SDK types — both agree on every
+  entry. Bangkok is 1, Chiang Mai 14, Betong 78.
+
+Hand-editing `<tailandStateID>` to a value outside the table is allowed; the
+field just reports it as unknown rather than overwriting your XML.
 
 ## Reaching your machine
 

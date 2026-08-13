@@ -10,6 +10,7 @@
     <header>
       <h1>ANPR Mock</h1>
       <span class="sub">Hikvision-style ANPR webhook simulator</span>
+      <button id="theme" class="icon" type="button" title="toggle light/dark">☀</button>
     </header>
 
     <div id="warn" class="warn hidden"></div>
@@ -18,6 +19,17 @@
       <section>
         <label for="url">Listener URL</label>
         <input id="url" type="text" spellcheck="false" />
+      </section>
+
+      <section class="row2">
+        <div>
+          <label for="plate">License plate</label>
+          <input id="plate" type="text" spellcheck="false" />
+        </div>
+        <div>
+          <label for="province">Province <span class="hint" id="stateHint"></span></label>
+          <select id="province"></select>
+        </div>
       </section>
 
       <section>
