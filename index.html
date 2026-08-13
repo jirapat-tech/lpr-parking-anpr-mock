@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ANPR Mock</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <header>
+      <h1>ANPR Mock</h1>
+      <span class="sub">Hikvision-style ANPR webhook simulator</span>
+    </header>
+
+    <div id="warn" class="warn hidden"></div>
+
+    <main>
+      <section>
+        <label for="url">Listener URL</label>
+        <input id="url" type="text" spellcheck="false" />
+      </section>
+
+      <section>
+        <label for="xml">
+          anpr.xml
+          <button id="resetXml" class="link" type="button">reset</button>
+          <button id="downloadXml" class="link" type="button">download</button>
+        </label>
+        <textarea id="xml" spellcheck="false" rows="18"></textarea>
+      </section>
+
+      <section>
+        <label>Pictures <span class="hint" id="pidHint"></span></label>
+        <div id="pids"></div>
+      </section>
+
+      <section class="actions">
+        <button id="fire" type="button">Fire request</button>
+        <button id="curl" class="ghost" type="button">Copy as curl</button>
+      </section>
+
+      <section>
+        <label>Result</label>
+        <pre id="result" class="result">—</pre>
+      </section>
+    </main>
+
+    <script src="./app.js"></script>
+  </body>
+</html>
