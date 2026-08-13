@@ -421,7 +421,6 @@ const renderHistory = () => {
           const time = new Date(entry.ts).toLocaleString()
           const state = OUTCOME_CLASS[entry.outcome] ?? "ok"
           return `<div class="hrow">
-            <span class="hdot ${state}"></span>
             <span class="htime">${esc(time)}</span>
             <span class="hplate">${esc(entry.plate || "—")}</span>
             <span class="hprov">${esc(entry.province || "—")}${entry.stateId ? ` <i>#${esc(entry.stateId)}</i>` : ""}</span>
