@@ -151,8 +151,67 @@ const PROVINCES = [
 const $ = (id) => document.getElementById(id)
 const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c])
 
-/** pId → File, in memory only. */
+/** pId → File. Mirrored into IndexedDB so picks survive a reload. */
 const images = new Map()
+
+// ─── image cache ───────────────────────────────────────────────────────────
+
+/**
+ * A browser never exposes the real path of a picked file — `File` carries the
+ * name and the bytes, nothing else — so the file itself is cached rather than a
+ * path. IndexedDB is used instead of localStorage because it stores Blobs
+ * natively and is not capped at a few megabytes; three camera stills would blow
+ * past a base64'd localStorage entry immediately.
+ */
+const DB_NAME = "anpr-mock"
+const STORE = "images"
+
+const openDb = () =>
+  new Promise((resolve, reject) => {
+    const request = indexedDB.open(DB_NAME, 1)
+    request.onupgradeneeded = () => request.result.createObjectStore(STORE)
+    request.onsuccess = () => resolve(request.result)
+    request.onerror = () => reject(request.error)
+  })
+
+/** Every cache write is best-effort: losing a cached picture must never break a fire. */
+const write = async (run) => {
+  try {
+    const db = await openDb()
+    const tx = db.transaction(STORE, "readwrite")
+    run(tx.objectStore(STORE))
+    await new Promise((resolve) => {
+      tx.oncomplete = resolve
+      tx.onerror = resolve
+      tx.onabort = resolve
+    })
+  } catch {
+    // private browsing, disabled storage, quota — carry on in memory
+  }
+}
+
+const cacheImage = (pId, file) => write((store) => store.put(file, pId))
+const uncacheImage = (pId) => write((store) => store.delete(pId))
+
+const restoreImages = async () => {
+  try {
+    const db = await openDb()
+    const tx = db.transaction(STORE, "readonly")
+    const store = tx.objectStore(STORE)
+    const keys = store.getAllKeys()
+    const files = store.getAll()
+    await new Promise((resolve) => {
+      tx.oncomplete = resolve
+      tx.onerror = resolve
+    })
+    ;(keys.result ?? []).forEach((pId, index) => {
+      const file = files.result?.[index]
+      if (file) images.set(pId, file)
+    })
+  } catch {
+    // nothing cached, or storage unavailable
+  }
+}
 
 /** Extract { pId, fileName } per <pictureInfo> block — no XML parser needed. */
 const parsePids = (xml) =>
@@ -258,9 +317,12 @@ const renderPids = () => {
   const pids = parsePids($("xml").value)
   const wrap = $("pids")
 
-  // Drop images whose pId no longer appears in the XML.
+  // Drop images whose pId no longer appears in the XML, cache included —
+  // otherwise editing the XML would leak orphaned blobs into IndexedDB forever.
   for (const pId of [...images.keys()]) {
-    if (!pids.some((entry) => entry.pId === pId)) images.delete(pId)
+    if (pids.some((entry) => entry.pId === pId)) continue
+    images.delete(pId)
+    void uncacheImage(pId)
   }
 
   $("pidHint").textContent = pids.length
@@ -287,13 +349,17 @@ const renderPids = () => {
   wrap.querySelectorAll("[data-pick]").forEach((input) => {
     input.onchange = () => {
       const file = input.files?.[0]
-      if (file) images.set(input.dataset.pick, file)
+      if (file) {
+        images.set(input.dataset.pick, file)
+        void cacheImage(input.dataset.pick, file)
+      }
       renderPids()
     }
   })
   wrap.querySelectorAll("[data-clear]").forEach((button) => {
     button.onclick = () => {
       images.delete(button.dataset.clear)
+      void uncacheImage(button.dataset.clear)
       renderPids()
     }
   })
@@ -333,37 +399,61 @@ const report = (text, ok) => {
   el.className = "result " + (ok === true ? "ok" : ok === false ? "err" : "")
 }
 
+/**
+ * Exactly one request per click — never a retry.
+ *
+ * A CORS failure is NOT a failure to send: the listener has already received
+ * and processed the POST by the time the browser rejects the promise for having
+ * no Access-Control-Allow-Origin. Resending on that error delivers the event
+ * twice, so the mode is chosen up front instead.
+ *
+ * `no-cors` still rejects when the connection genuinely fails, and resolves
+ * with an opaque response once the request has been delivered — so delivery is
+ * knowable without CORS. Only the status code is hidden.
+ */
 const fire = async () => {
   save()
   const url = $("url").value.trim()
   const xml = $("xml").value
   const { form, missing } = buildForm(xml, parsePids(xml))
   const note = missing.length ? `\nno picture attached for: ${missing.join(", ")}` : ""
+  const readResponse = $("readResponse").checked
   const startedAt = Date.now()
 
-  report("firing…")
+  $("fire").disabled = true
+  report(`firing… (${readResponse ? "cors" : "no-cors"})`)
+
   try {
-    const response = await fetch(url, { method: "POST", body: form })
-    const body = await response.text()
-    report(
-      `${response.status} ${response.statusText} · ${Date.now() - startedAt}ms${note}\n\n${body.slice(0, 8000)}`,
-      response.ok
-    )
-  } catch (error) {
-    // The listener sends no CORS headers, so a normal fetch rejects even when
-    // the POST would be accepted. Resend opaquely: the server still receives it,
-    // the browser just refuses to show us the response.
-    try {
+    if (readResponse) {
+      const response = await fetch(url, { method: "POST", body: form })
+      const body = await response.text()
+      report(
+        `${response.status} ${response.statusText} · ${Date.now() - startedAt}ms${note}\n\n${body.slice(0, 8000)}`,
+        response.ok
+      )
+    } else {
       await fetch(url, { method: "POST", body: form, mode: "no-cors" })
       report(
-        `sent · ${Date.now() - startedAt}ms${note}\n\n` +
-          "Response not readable: the listener returned no CORS headers, so the browser hides it.\n" +
-          "Check the desktop app log to confirm the event was processed.",
+        `delivered · ${Date.now() - startedAt}ms${note}\n\n` +
+          "The listener received the request. Its status code is hidden because the\n" +
+          "response is opaque in no-cors mode — check the desktop app log for the result,\n" +
+          "or tick “read response” if this endpoint sends CORS headers.",
         true
       )
-    } catch {
-      report(`failed · ${Date.now() - startedAt}ms${note}\n\n${error.message}`, false)
     }
+  } catch (error) {
+    report(
+      `failed · ${Date.now() - startedAt}ms${note}\n\n${error.message}\n\n` +
+        (readResponse
+          ? "In cors mode this also fires when the listener sends no CORS headers —\n" +
+            "in that case the request WAS delivered and only the response was blocked.\n" +
+            "Untick “read response” to avoid the ambiguity."
+          : "The request never reached the listener. Check the URL, the port, and that\n" +
+            "the desktop app is running."),
+      false
+    )
+  } finally {
+    $("fire").disabled = false
   }
 }
 
@@ -386,9 +476,13 @@ const curlCommand = () => {
 applyTheme(localStorage.getItem("anpr-theme") || "light")
 fillProvinces()
 load()
+$("readResponse").checked = localStorage.getItem("anpr-read-response") === "1"
 fieldsFromXml()
 renderPids()
 checkEnv()
+
+// Cached pictures come back asynchronously; re-render once they land.
+void restoreImages().then(renderPids)
 
 $("theme").onclick = () => applyTheme(document.documentElement.dataset.theme === "dark" ? "light" : "dark")
 $("plate").oninput = fieldsToXml
@@ -417,6 +511,7 @@ $("downloadXml").onclick = () => {
   URL.revokeObjectURL(url)
 }
 $("fire").onclick = fire
+$("readResponse").onchange = () => localStorage.setItem("anpr-read-response", $("readResponse").checked ? "1" : "")
 $("curl").onclick = async () => {
   await navigator.clipboard.writeText(curlCommand())
   report("curl command copied.\nDownload anpr.xml first, then run it from that folder.\n\n" + curlCommand())

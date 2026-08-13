@@ -16,8 +16,12 @@ Static — three files, no build, no dependencies.
 4. Attach an image per picture. Missing ones are omitted, not faked.
 5. **Fire request.**
 
-The URL, XML, and theme persist in `localStorage`. Images are held in memory
-only, so a reload clears them. Light theme by default; toggle in the header.
+Everything persists across reloads: the URL, XML, and theme in `localStorage`,
+the pictures in IndexedDB. Light theme by default; toggle in the header.
+
+Pictures are cached as files, not paths — a browser never exposes the real path
+of a picked file, only its name and bytes. Removing a `<pId>` from the XML drops
+its cached picture too, so edits cannot leave orphaned blobs behind.
 
 ### Plate and province fields
 
@@ -63,12 +67,22 @@ Or use **Copy as curl**, which has no browser restrictions at all.
 ## Why the response is usually unreadable
 
 The listener sends no CORS headers, so the browser refuses to expose the
-response even when the POST is accepted. The app retries the request in
-`no-cors` mode and reports `sent` — the server does receive it; only the reply
-is hidden. Confirm the event in the desktop app log.
+response even though the POST is accepted.
 
-If the listener ever adds `Access-Control-Allow-Origin`, the real status and
-body appear automatically — no change needed here.
+The app therefore fires in `no-cors` mode by default: **exactly one request per
+click**, reported as `delivered`, with the status code hidden. Check the desktop
+app log for the outcome.
+
+> Earlier versions tried a normal request first and fell back to `no-cors` on
+> error. That delivered the event **twice** — a CORS rejection happens *after*
+> the server has already accepted and processed the request, so the retry was a
+> genuine second POST. The mode is now chosen up front and never retried.
+
+If your listener does send `Access-Control-Allow-Origin`, tick **read response**
+to get the real status and body — still one request.
+
+`no-cors` still rejects when the connection genuinely fails, so `delivered`
+versus `failed` remains trustworthy; only the status code is lost.
 
 ## Request shape
 
