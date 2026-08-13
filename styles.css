@@ -306,3 +306,300 @@ button:disabled {
   opacity: 0.5;
   cursor: default;
 }
+
+/* ─── header nav + language ─────────────────────────────────────────────── */
+header nav {
+  display: flex;
+  gap: 4px;
+}
+header nav a {
+  color: var(--dim);
+  text-decoration: none;
+  font-size: 11.5px;
+  padding: 5px 10px;
+  border: 1px solid transparent;
+  border-radius: 5px;
+}
+header nav a:hover {
+  color: var(--txt);
+}
+header nav a.active {
+  color: var(--txt);
+  border-color: var(--border);
+  background: var(--panel);
+}
+select.lang {
+  width: auto;
+  padding: 5px 8px;
+  font-size: 11.5px;
+}
+
+/* ─── history ───────────────────────────────────────────────────────────── */
+.hrow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 11px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  margin-bottom: 5px;
+  font-size: 11.5px;
+}
+.hdot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex: none;
+  background: var(--faint);
+}
+.hdot.ok {
+  background: var(--ok);
+}
+.hdot.warn {
+  background: var(--warn);
+}
+.hdot.err {
+  background: var(--err);
+}
+.htime {
+  color: var(--faint);
+  white-space: nowrap;
+}
+.hplate {
+  font-weight: 600;
+  min-width: 90px;
+}
+.hprov {
+  flex: 1;
+  color: var(--dim);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.hprov i,
+.hpics i {
+  font-style: normal;
+  color: var(--faint);
+}
+.hpics {
+  color: var(--dim);
+  white-space: nowrap;
+}
+.hout {
+  white-space: nowrap;
+}
+.hout.ok {
+  color: var(--ok);
+}
+.hout.warn {
+  color: var(--warn);
+}
+.hout.err {
+  color: var(--err);
+}
+
+.result.warn {
+  border-color: var(--warn);
+  color: var(--txt);
+}
+
+/* ─── help page ─────────────────────────────────────────────────────────── */
+.doc section {
+  margin-bottom: 26px;
+}
+.doc h2 {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 13.5px;
+  margin: 0 0 10px;
+  padding-bottom: 7px;
+  border-bottom: 1px solid var(--border);
+}
+.doc .num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  flex: none;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  font-size: 10.5px;
+  color: var(--dim);
+}
+.doc p,
+.doc li {
+  line-height: 1.85;
+  color: var(--dim);
+}
+.doc p {
+  margin: 0 0 9px;
+}
+.doc ul {
+  margin: 0 0 9px;
+  padding-left: 20px;
+}
+.doc li {
+  margin-bottom: 5px;
+}
+.doc b,
+.doc u {
+  color: var(--txt);
+}
+.doc b.ok {
+  color: var(--ok);
+}
+.doc b.warn {
+  color: var(--warn);
+}
+.doc b.err {
+  color: var(--err);
+}
+.doc code {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 1px 5px;
+  font-size: 11.5px;
+  color: var(--txt);
+}
+.doc pre {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 11px;
+  overflow-x: auto;
+  font-size: 11.5px;
+  color: var(--txt);
+  margin: 0 0 9px;
+}
+.doc .note {
+  border-left: 2px solid var(--border);
+  padding-left: 11px;
+  font-size: 11.5px;
+}
+.scroll {
+  overflow-x: auto;
+  margin-bottom: 9px;
+}
+.doc table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11.5px;
+  min-width: 460px;
+}
+.doc th,
+.doc td {
+  text-align: left;
+  vertical-align: top;
+  padding: 7px 10px;
+  border: 1px solid var(--border);
+  line-height: 1.7;
+}
+.doc th {
+  background: var(--panel);
+  color: var(--txt);
+  font-weight: 600;
+}
+.doc td {
+  color: var(--dim);
+}
+
+/* Reproduction of the desktop app's settings screen (see help.js). */
+.shot {
+  margin: 0 0 11px;
+}
+.shot-ui {
+  display: flex;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  overflow: hidden;
+  background: var(--bg);
+  min-width: 420px;
+}
+.shot-side {
+  width: 168px;
+  flex: none;
+  padding: 11px 9px;
+  border-right: 1px solid var(--border);
+  background: var(--panel);
+}
+.shot-side-h {
+  font-size: 9.5px;
+  letter-spacing: 0.8px;
+  color: var(--faint);
+  margin-bottom: 9px;
+}
+.shot-item {
+  padding: 6px 9px;
+  border-radius: 5px;
+  font-size: 11.5px;
+  color: var(--dim);
+  margin-bottom: 3px;
+}
+.shot-item.sub {
+  margin-left: 14px;
+}
+.shot-item.sel {
+  color: #4f46e5;
+  background: rgba(79, 70, 229, 0.1);
+  font-weight: 600;
+}
+.shot-panel {
+  flex: 1;
+  padding: 14px 16px;
+}
+.shot-title {
+  font-weight: 700;
+  font-size: 12.5px;
+  color: var(--txt);
+  padding-bottom: 9px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 12px;
+}
+.shot-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+.shot-label {
+  font-size: 12px;
+  color: var(--txt);
+  margin-bottom: 3px;
+}
+.shot-badge {
+  font-size: 9.5px;
+  color: #b45309;
+  background: #fef3c7;
+  border-radius: 9px;
+  padding: 1px 7px;
+  margin-left: 5px;
+}
+.shot-desc {
+  font-size: 11px;
+  color: var(--faint);
+}
+.shot-toggle {
+  width: 38px;
+  height: 21px;
+  flex: none;
+  margin-left: auto;
+  border-radius: 11px;
+  background: #4f46e5;
+  position: relative;
+}
+.shot-toggle i {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: #fff;
+}
+.shot figcaption {
+  margin-top: 7px;
+  font-size: 10.5px;
+  color: var(--faint);
+}

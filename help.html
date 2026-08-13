@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="th">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ANPR Mock — help</title>
+    <link rel="stylesheet" href="./styles.css" />
+    <script>
+      document.documentElement.dataset.theme = localStorage.getItem("anpr-theme") || "light"
+    </script>
+  </head>
+  <body>
+    <header>
+      <h1 data-i18n="app.title">ANPR Mock</h1>
+      <span class="sub" data-i18n="nav.help"></span>
+      <nav>
+        <a href="./index.html" data-i18n="nav.app"></a>
+        <a class="active" href="./help.html" data-i18n="nav.help"></a>
+      </nav>
+      <select id="lang" class="lang"></select>
+      <button id="theme" class="icon" type="button" title="light / dark">☀</button>
+    </header>
+
+    <main id="doc" class="doc"></main>
+
+    <script src="./theme.js"></script>
+    <script src="./i18n.js"></script>
+    <script src="./help.js"></script>
+  </body>
+</html>

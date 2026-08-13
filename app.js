@@ -243,8 +243,8 @@ const fieldsFromXml = () => {
   const known = PROVINCES.some(([n]) => String(n) === stateId)
   $("province").value = known ? stateId : ""
   $("stateHint").textContent = known
-    ? `tailandStateID = ${stateId}`
-    : `tailandStateID = ${stateId || "(empty)"} — not in the table`
+    ? t("hint.state", { id: stateId })
+    : t("hint.stateUnknown", { id: stateId || "—" })
 }
 
 const fieldsToXml = () => {
@@ -256,14 +256,6 @@ const fieldsToXml = () => {
   $("xml").value = xml
   save()
   fieldsFromXml()
-}
-
-// ─── theme ─────────────────────────────────────────────────────────────────
-
-const applyTheme = (theme) => {
-  document.documentElement.dataset.theme = theme
-  $("theme").textContent = theme === "dark" ? "☾" : "☀"
-  localStorage.setItem("anpr-theme", theme)
 }
 
 // ─── persistence ───────────────────────────────────────────────────────────
@@ -303,12 +295,7 @@ const checkEnv = () => {
     return
   }
   el.className = "warn"
-  el.innerHTML =
-    "<b>Blocked: mixed content.</b> This page is on HTTPS, so the browser will not send a request to " +
-    "<code>" +
-    esc(target.origin) +
-    "</code>. Only <code>localhost</code> and <code>127.0.0.1</code> are exempt.<br />" +
-    "Run this page locally over http instead — clone the repo and <code>npx serve .</code> — or use <b>Copy as curl</b>."
+  el.innerHTML = t("warn.mixed", { origin: esc(target.origin) })
 }
 
 // ─── picture list ──────────────────────────────────────────────────────────
@@ -326,8 +313,8 @@ const renderPids = () => {
   }
 
   $("pidHint").textContent = pids.length
-    ? `${images.size}/${pids.length} attached · missing pictures are simply omitted`
-    : "no <pictureInfo> blocks in the XML"
+    ? t("hint.attached", { n: images.size, total: pids.length })
+    : t("hint.noPictures")
 
   wrap.innerHTML =
     pids
@@ -336,15 +323,15 @@ const renderPids = () => {
         return `<div class="pid">
           <div class="thumb${file ? "" : " empty"}" id="thumb-${esc(entry.pId)}">${file ? "" : "—"}</div>
           <div class="pid-body">
-            <div class="pid-name">${esc(entry.fileName || "(no fileName)")}</div>
+            <div class="pid-name">${esc(entry.fileName || t("pid.noFileName"))}</div>
             <div class="pid-id">${esc(entry.pId)}</div>
             ${file ? `<div class="pid-file">${esc(file.name)} · ${Math.round(file.size / 1024)} KB</div>` : ""}
           </div>
-          <label class="btn-file">${file ? "Replace" : "Pick"}<input type="file" accept="image/*" data-pick="${esc(entry.pId)}" /></label>
-          ${file ? `<button class="ghost" type="button" data-clear="${esc(entry.pId)}">Clear</button>` : ""}
+          <label class="btn-file">${file ? t("btn.replace") : t("btn.pick")}<input type="file" accept="image/*" data-pick="${esc(entry.pId)}" /></label>
+          ${file ? `<button class="ghost" type="button" data-clear="${esc(entry.pId)}">${t("btn.clear")}</button>` : ""}
         </div>`
       })
-      .join("") || `<div class="empty-box">nothing to attach</div>`
+      .join("") || t("empty.nothing") ? `<div class="empty-box">${t("empty.nothing")}</div>` : ""
 
   wrap.querySelectorAll("[data-pick]").forEach((input) => {
     input.onchange = () => {
@@ -376,6 +363,93 @@ const renderPids = () => {
   })
 }
 
+// ─── history ───────────────────────────────────────────────────────────────
+
+/**
+ * What was fired, not what came back — the response is opaque in no-cors mode,
+ * so the outcome column records delivery, never the listener's own result.
+ * Small enough for localStorage; images are deliberately not recorded.
+ */
+const HISTORY_KEY = "anpr-history"
+const HISTORY_MAX = 50
+
+const readHistory = () => {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(HISTORY_KEY) ?? "[]")
+    return Array.isArray(parsed) ? parsed : []
+  } catch {
+    return []
+  }
+}
+
+const writeHistory = (entries) => {
+  try {
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(entries.slice(0, HISTORY_MAX)))
+  } catch {
+    // quota — history is disposable
+  }
+  renderHistory()
+}
+
+/** Snapshot the request that was just sent. Called from fire() with the outcome. */
+const remember = (outcome) => {
+  const xml = $("xml").value
+  const stateId = getTag(xml, "tailandStateID")
+  const province = PROVINCES.find(([n]) => String(n) === stateId)
+  writeHistory([
+    {
+      ts: Date.now(),
+      plate: getTag(xml, "licensePlate"),
+      stateId,
+      province: province ? province[LANG === "th" ? 3 : 2] : "",
+      url: $("url").value.trim(),
+      pictures: parsePids(xml).filter((entry) => images.has(entry.pId)).length,
+      outcome,
+    },
+    ...readHistory(),
+  ])
+}
+
+const OUTCOME_CLASS = { delivered: "ok", "blocked?": "warn", failed: "err" }
+
+const renderHistory = () => {
+  const entries = readHistory()
+  $("historyHint").textContent = entries.length ? t("hint.historyCount", { n: entries.length }) : ""
+  $("history").innerHTML = entries.length
+    ? entries
+        .map((entry, index) => {
+          const time = new Date(entry.ts).toLocaleString()
+          const state = OUTCOME_CLASS[entry.outcome] ?? "ok"
+          return `<div class="hrow">
+            <span class="hdot ${state}"></span>
+            <span class="htime">${esc(time)}</span>
+            <span class="hplate">${esc(entry.plate || "—")}</span>
+            <span class="hprov">${esc(entry.province || "—")}${entry.stateId ? ` <i>#${esc(entry.stateId)}</i>` : ""}</span>
+            <span class="hpics">${entry.pictures} <i>img</i></span>
+            <span class="hout ${state}">${esc(entry.outcome)}</span>
+            <button class="link" type="button" data-restore="${index}">${esc(t("btn.restore"))}</button>
+          </div>`
+        })
+        .join("")
+    : `<div class="empty-box">${esc(t("empty.history"))}</div>`
+
+  $("history")
+    .querySelectorAll("[data-restore]")
+    .forEach((button) => {
+      button.onclick = () => restoreHistory(entries[Number(button.dataset.restore)])
+    })
+}
+
+/** Put a past plate/province back into the form — the fastest way to refire one. */
+const restoreHistory = (entry) => {
+  if (!entry) return
+  $("plate").value = entry.plate ?? ""
+  if (entry.stateId) $("province").value = entry.stateId
+  if (entry.url) $("url").value = entry.url
+  fieldsToXml()
+  checkEnv()
+}
+
 // ─── fire ──────────────────────────────────────────────────────────────────
 
 const buildForm = (xml, pids) => {
@@ -393,10 +467,11 @@ const buildForm = (xml, pids) => {
   return { form, missing }
 }
 
-const report = (text, ok) => {
+/** state: "ok" | "err" | "warn" | undefined (neutral). */
+const report = (text, state) => {
   const el = $("result")
   el.textContent = text
-  el.className = "result " + (ok === true ? "ok" : ok === false ? "err" : "")
+  el.className = "result " + (state ?? "")
 }
 
 /**
@@ -416,12 +491,12 @@ const fire = async () => {
   const url = $("url").value.trim()
   const xml = $("xml").value
   const { form, missing } = buildForm(xml, parsePids(xml))
-  const note = missing.length ? `\nno picture attached for: ${missing.join(", ")}` : ""
+  const note = missing.length ? t("msg.noPicture", { ids: missing.join(", ") }) : ""
   const readResponse = $("readResponse").checked
   const startedAt = Date.now()
 
   $("fire").disabled = true
-  report(`firing… (${readResponse ? "cors" : "no-cors"})`)
+  report(t("msg.firing", { mode: readResponse ? "cors" : "no-cors" }))
 
   try {
     if (readResponse) {
@@ -429,29 +504,25 @@ const fire = async () => {
       const body = await response.text()
       report(
         `${response.status} ${response.statusText} · ${Date.now() - startedAt}ms${note}\n\n${body.slice(0, 8000)}`,
-        response.ok
+        response.ok ? "ok" : "err"
       )
+      remember(`${response.status}`)
     } else {
       await fetch(url, { method: "POST", body: form, mode: "no-cors" })
-      report(
-        `delivered · ${Date.now() - startedAt}ms${note}\n\n` +
-          "The listener received the request. Its status code is hidden because the\n" +
-          "response is opaque in no-cors mode — check the desktop app log for the result,\n" +
-          "or tick “read response” if this endpoint sends CORS headers.",
-        true
-      )
+      report(t("msg.delivered", { ms: Date.now() - startedAt, note }), "ok")
+      remember("delivered")
     }
   } catch (error) {
-    report(
-      `failed · ${Date.now() - startedAt}ms${note}\n\n${error.message}\n\n` +
-        (readResponse
-          ? "In cors mode this also fires when the listener sends no CORS headers —\n" +
-            "in that case the request WAS delivered and only the response was blocked.\n" +
-            "Untick “read response” to avoid the ambiguity."
-          : "The request never reached the listener. Check the URL, the port, and that\n" +
-            "the desktop app is running."),
-      false
-    )
+    // A cors-mode rejection cannot tell "blocked by CORS after delivery" apart
+    // from "never arrived", so it must not be painted as a failure — the request
+    // very likely did land. Only a no-cors rejection is a real delivery failure.
+    if (readResponse) {
+      report(`${t("msg.blocked")} · ${Date.now() - startedAt}ms${note}\n\n${t("msg.failedCors")}`, "warn")
+      remember("blocked?")
+    } else {
+      report(`${t("msg.failed")} · ${Date.now() - startedAt}ms${note}\n\n${error.message}\n\n${t("msg.failedConn")}`, "err")
+      remember("failed")
+    }
   } finally {
     $("fire").disabled = false
   }
@@ -473,18 +544,27 @@ const curlCommand = () => {
 
 // ─── wiring ────────────────────────────────────────────────────────────────
 
-applyTheme(localStorage.getItem("anpr-theme") || "light")
 fillProvinces()
 load()
 $("readResponse").checked = localStorage.getItem("anpr-read-response") === "1"
 fieldsFromXml()
 renderPids()
+renderHistory()
 checkEnv()
+
+/** Called by applyLang: the parts built in JS are not covered by data-i18n. */
+const onLangChange = () => {
+  renderPids()
+  renderHistory()
+  fieldsFromXml()
+  checkEnv()
+}
+
+initLang()
 
 // Cached pictures come back asynchronously; re-render once they land.
 void restoreImages().then(renderPids)
 
-$("theme").onclick = () => applyTheme(document.documentElement.dataset.theme === "dark" ? "light" : "dark")
 $("plate").oninput = fieldsToXml
 $("province").onchange = fieldsToXml
 $("url").oninput = () => {
@@ -511,8 +591,9 @@ $("downloadXml").onclick = () => {
   URL.revokeObjectURL(url)
 }
 $("fire").onclick = fire
+$("clearHistory").onclick = () => writeHistory([])
 $("readResponse").onchange = () => localStorage.setItem("anpr-read-response", $("readResponse").checked ? "1" : "")
 $("curl").onclick = async () => {
   await navigator.clipboard.writeText(curlCommand())
-  report("curl command copied.\nDownload anpr.xml first, then run it from that folder.\n\n" + curlCommand())
+  report(t("msg.curlCopied") + curlCommand())
 }

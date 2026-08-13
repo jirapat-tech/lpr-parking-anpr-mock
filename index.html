@@ -1,65 +1,85 @@
 <!doctype html>
-<html lang="en">
+<html lang="th">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>ANPR Mock</title>
     <link rel="stylesheet" href="./styles.css" />
+    <!-- Set the theme before first paint so dark mode never flashes white. -->
+    <script>
+      document.documentElement.dataset.theme = localStorage.getItem("anpr-theme") || "light"
+    </script>
   </head>
   <body>
     <header>
-      <h1>ANPR Mock</h1>
-      <span class="sub">Hikvision-style ANPR webhook simulator</span>
-      <button id="theme" class="icon" type="button" title="toggle light/dark">☀</button>
+      <h1 data-i18n="app.title">ANPR Mock</h1>
+      <span class="sub" data-i18n="app.sub"></span>
+      <nav>
+        <a class="active" href="./index.html" data-i18n="nav.app"></a>
+        <a href="./help.html" data-i18n="nav.help"></a>
+      </nav>
+      <select id="lang" class="lang"></select>
+      <button id="theme" class="icon" type="button" title="light / dark">☀</button>
     </header>
 
     <div id="warn" class="warn hidden"></div>
 
     <main>
       <section>
-        <label for="url">Listener URL</label>
+        <label for="url" data-i18n="label.url"></label>
         <input id="url" type="text" spellcheck="false" />
       </section>
 
       <section class="row2">
         <div>
-          <label for="plate">License plate</label>
+          <label for="plate" data-i18n="label.plate"></label>
           <input id="plate" type="text" spellcheck="false" />
         </div>
         <div>
-          <label for="province">Province <span class="hint" id="stateHint"></span></label>
+          <label for="province"><span data-i18n="label.province"></span> <span class="hint" id="stateHint"></span></label>
           <select id="province"></select>
         </div>
       </section>
 
       <section>
         <label for="xml">
-          anpr.xml
-          <button id="resetXml" class="link" type="button">reset</button>
-          <button id="downloadXml" class="link" type="button">download</button>
+          <span data-i18n="label.xml"></span>
+          <button id="resetXml" class="link" type="button" data-i18n="btn.reset"></button>
+          <button id="downloadXml" class="link" type="button" data-i18n="btn.download"></button>
         </label>
         <textarea id="xml" spellcheck="false" rows="18"></textarea>
       </section>
 
       <section>
-        <label>Pictures <span class="hint" id="pidHint"></span></label>
+        <label><span data-i18n="label.pictures"></span> <span class="hint" id="pidHint"></span></label>
         <div id="pids"></div>
       </section>
 
       <section class="actions">
-        <button id="fire" type="button">Fire request</button>
-        <button id="curl" class="ghost" type="button">Copy as curl</button>
-        <label class="check" title="Only works if the listener sends CORS headers">
-          <input id="readResponse" type="checkbox" /> read response
+        <button id="fire" type="button" data-i18n="btn.fire"></button>
+        <button id="curl" class="ghost" type="button" data-i18n="btn.curl"></button>
+        <label class="check" data-i18n-title="check.readResponse.title">
+          <input id="readResponse" type="checkbox" /> <span data-i18n="check.readResponse"></span>
         </label>
       </section>
 
       <section>
-        <label>Result</label>
+        <label data-i18n="label.result"></label>
         <pre id="result" class="result">—</pre>
+      </section>
+
+      <section>
+        <label>
+          <span data-i18n="label.history"></span>
+          <span class="hint" id="historyHint"></span>
+          <button id="clearHistory" class="link" type="button" data-i18n="btn.clearHistory"></button>
+        </label>
+        <div id="history"></div>
       </section>
     </main>
 
+    <script src="./theme.js"></script>
+    <script src="./i18n.js"></script>
     <script src="./app.js"></script>
   </body>
 </html>

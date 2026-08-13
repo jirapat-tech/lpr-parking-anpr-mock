@@ -3,9 +3,25 @@
 Web page that fires a Hikvision-style ANPR webhook at a camera listener
 endpoint: an editable `anpr.xml` plus one uploaded image per `<pId>` in the XML.
 
-Static — three files, no build, no dependencies.
+Static — no build, no dependencies. Thai / English / Japanese, light and dark.
 
 **Live:** https://jirapat-tech.github.io/lpr-parking-anpr-mock/
+
+There is a **How to use** page (`help.html`) documenting every field, every XML
+tag the listener actually reads, and the failure modes — in all three languages.
+
+## Enable Debug mode first
+
+Against an installed (packaged) desktop app, turn on
+**Settings → Configuration → Application → Advanced → Debug mode**, then restart it.
+
+The local server enforces an IP whitelist and only accepts registered cameras;
+a request from a browser is not one, so it is rejected with `403 Forbidden`.
+Debug mode disables the whitelist. Running the desktop app in dev mode skips the
+whitelist already, so it is not needed there.
+
+That 403 is invisible in `no-cors` mode — the page reports `delivered` and
+nothing happens. Suspect Debug mode first.
 
 ## Use
 
@@ -16,8 +32,10 @@ Static — three files, no build, no dependencies.
 4. Attach an image per picture. Missing ones are omitted, not faked.
 5. **Fire request.**
 
-Everything persists across reloads: the URL, XML, and theme in `localStorage`,
-the pictures in IndexedDB. Light theme by default; toggle in the header.
+Everything persists across reloads: the URL, XML, language, theme and the last
+50 fires in `localStorage`, the pictures in IndexedDB. The history list records
+plate, province, picture count and delivery outcome, and **reuse** puts a past
+request back into the form. Light theme by default; toggle in the header.
 
 Pictures are cached as files, not paths — a browser never exposes the real path
 of a picked file, only its name and bytes. Removing a `<pId>` from the XML drops
