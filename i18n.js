@@ -17,6 +17,7 @@ const I18N = {
     "nav.help": "วิธีใช้",
 
     "label.url": "Listener URL",
+    "label.request": "คำขอ",
     "label.plate": "ทะเบียนรถ",
     "label.province": "จังหวัด",
     "label.xml": "anpr.xml",
@@ -28,6 +29,15 @@ const I18N = {
     "hint.historyCount": "{n} รายการ · เก็บเฉพาะสิ่งที่ส่งออกไป ไม่ใช่ผลฝั่ง listener",
     "empty.history": "ยังไม่มีประวัติ",
     "msg.blocked": "response ถูกบล็อก",
+    "msg.deliveredShort": "ส่งถึงแล้ว",
+    "msg.copied": "คัดลอกแล้ว",
+    "status.idle": "ยังไม่ได้ยิง",
+    "presence.online": "ออนไลน์",
+    "presence.yourName": "ชื่อของคุณ",
+    "presence.share": "แสดงตัวให้คนอื่นเห็น",
+    "presence.alone": "ตอนนี้มีคุณคนเดียว",
+    "presence.note": "ชื่อและ host:port ที่ยิงจะถูกเผยแพร่ให้ทุกคนที่เปิดหน้านี้เห็น",
+    "hint.notAttached": "ยังไม่ได้แนบรูป",
 
     "btn.reset": "คืนค่าเดิม",
     "btn.download": "ดาวน์โหลด",
@@ -72,6 +82,7 @@ const I18N = {
     "nav.help": "How to use",
 
     "label.url": "Listener URL",
+    "label.request": "Request",
     "label.plate": "License plate",
     "label.province": "Province",
     "label.xml": "anpr.xml",
@@ -83,6 +94,15 @@ const I18N = {
     "hint.historyCount": "{n} entries · records what was sent, not the listener's own result",
     "empty.history": "nothing fired yet",
     "msg.blocked": "response blocked",
+    "msg.deliveredShort": "delivered",
+    "msg.copied": "copied",
+    "status.idle": "not fired yet",
+    "presence.online": "online",
+    "presence.yourName": "your name",
+    "presence.share": "show me to others",
+    "presence.alone": "nobody else right now",
+    "presence.note": "Your name and the host:port you target are broadcast to everyone with this page open.",
+    "hint.notAttached": "no picture attached",
 
     "btn.reset": "reset",
     "btn.download": "download",
@@ -129,6 +149,7 @@ const I18N = {
     "nav.help": "使い方",
 
     "label.url": "Listener URL",
+    "label.request": "リクエスト",
     "label.plate": "ナンバープレート",
     "label.province": "県",
     "label.xml": "anpr.xml",
@@ -140,6 +161,15 @@ const I18N = {
     "hint.historyCount": "{n} 件 · 送信内容の記録です（listener 側の結果ではありません）",
     "empty.history": "まだ送信していません",
     "msg.blocked": "レスポンスがブロックされました",
+    "msg.deliveredShort": "送信完了",
+    "msg.copied": "コピーしました",
+    "status.idle": "未送信",
+    "presence.online": "オンライン",
+    "presence.yourName": "あなたの名前",
+    "presence.share": "他の人に表示する",
+    "presence.alone": "現在あなただけです",
+    "presence.note": "名前と送信先の host:port は、このページを開いている全員に共有されます。",
+    "hint.notAttached": "画像が未添付",
 
     "btn.reset": "リセット",
     "btn.download": "ダウンロード",
@@ -208,9 +238,14 @@ const applyLang = (lang) => {
   document.querySelectorAll("[data-i18n-title]").forEach((el) => {
     el.title = t(el.dataset.i18nTitle)
   })
+  document.querySelectorAll("[data-i18n-placeholder]").forEach((el) => {
+    el.placeholder = t(el.dataset.i18nPlaceholder)
+  })
 
   // Pages re-render their dynamic parts here; both define it before this runs.
   if (typeof onLangChange === "function") onLangChange()
+  // Presence is a module and loads later, so it registers its own hook.
+  window.onPresenceLang?.()
 }
 
 const initLang = () => {

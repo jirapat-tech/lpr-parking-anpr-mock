@@ -4,24 +4,24 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>ANPR Mock — help</title>
+    <link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><rect x="1" y="4" width="14" height="8" rx="1.5" fill="none" stroke="%232f5fd0" stroke-width="1.5"/><path d="M4.5 8h1.5M7.25 8h1.5M10 8h1.5" stroke="%232f5fd0" stroke-width="1.5" stroke-linecap="round"/></svg>' />
     <link rel="stylesheet" href="./styles.css" />
     <script>
       document.documentElement.dataset.theme = localStorage.getItem("anpr-theme") || "light"
     </script>
   </head>
   <body>
-    <header>
-      <h1 data-i18n="app.title">ANPR Mock</h1>
-      <span class="sub" data-i18n="nav.help"></span>
-      <nav>
-        <a href="./index.html" data-i18n="nav.app"></a>
-        <a class="active" href="./help.html" data-i18n="nav.help"></a>
-      </nav>
-      <select id="lang" class="lang"></select>
-      <button id="theme" class="icon" type="button" title="light / dark">☀</button>
+    <header class="bar">
+      <span class="brand">ANPR<em>mock</em></span>
+      <span style="flex: 1"></span>
+      <a class="tab" href="./index.html" data-i18n="nav.app"></a>
+      <a class="tab active" href="./help.html" data-i18n="nav.help"></a>
+      <span class="bar-sep" aria-hidden="true"></span>
+      <select id="lang" class="quiet-select" aria-label="Language"></select>
+      <button id="theme" class="quiet icon" type="button" title="light / dark">☀</button>
     </header>
 
-    <main id="doc" class="doc"></main>
+    <main class="doc"><div class="doc-inner" id="doc"></div></main>
 
     <script src="./theme.js"></script>
     <script src="./i18n.js"></script>

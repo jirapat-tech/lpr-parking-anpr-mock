@@ -115,6 +115,26 @@ Content-Type: multipart/form-data
 One image part per `<pictureInfo>`, named after its `<pId>`. This mirrors the
 desktop app's built-in simulator, so a listener cannot tell them apart.
 
+## Live presence (optional, off by default)
+
+Shows who else has the page open and which listener each of them is pointed at —
+two people firing at the same desktop app otherwise produce one interleaved log
+with no way to tell whose event is whose.
+
+It is disabled until `presence.config.js` is filled in. Left blank, nothing runs
+and no external request is made at all; the Supabase SDK is not even fetched.
+
+To enable, create a Supabase project (free tier), turn on Realtime, and paste the
+project URL and **anon** key into `presence.config.js`. Realtime Presence is used
+rather than a table, so the state is ephemeral and clears itself when a tab
+closes — there are no stale rows to clean up.
+
+**Before you enable it:** GitHub Pages serves this site publicly even when the
+repository is private. Anyone who finds the URL can join the channel and read
+every name and `host:port` being broadcast, including internal addresses. Treat
+what you broadcast as public, or leave presence off. Each person can also untick
+*show me to others* to stay out of it.
+
 ## Deploy
 
 GitHub Pages → Settings → Pages → Deploy from branch → `main` / `/ (root)`.
