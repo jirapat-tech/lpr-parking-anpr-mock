@@ -124,8 +124,10 @@ with no way to tell whose event is whose.
 It is disabled until `presence.config.js` is filled in. Left blank, nothing runs
 and no external request is made at all; the Supabase SDK is not even fetched.
 
-To enable, create a Supabase project (free tier) and paste its URL and **anon**
-key into `presence.config.js`. Nothing needs switching on: Presence runs on a
+To enable, create a Supabase project (free tier) and paste its URL and
+**publishable** key (`sb_publishable_…`, labelled *anon / public* in older
+dashboards) into `presence.config.js`. Never the **Secret** key — it bypasses Row
+Level Security and this file is served publicly. Nothing needs switching on: Presence runs on a
 public Realtime channel and touches no database table, so there is no schema, no
 replication setting, and no stale rows to clean up — state lives in the channel
 and clears itself when a tab closes.
