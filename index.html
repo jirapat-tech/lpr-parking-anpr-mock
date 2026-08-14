@@ -94,6 +94,22 @@
       </section>
     </main>
 
+    <!-- Direct message dock. Hidden until a person is picked from presence. -->
+    <aside id="chat" class="chat" hidden>
+      <div class="c-head">
+        <span class="c-dot"></span>
+        <strong id="chatPeer"></strong>
+        <button id="chatClose" class="c-x" type="button" aria-label="close">×</button>
+      </div>
+      <div id="chatLog" class="c-log"></div>
+      <div id="chatTyping" class="c-typing" aria-live="polite"></div>
+      <div class="c-input">
+        <label class="sr-only" for="chatInput" data-i18n="chat.placeholder"></label>
+        <input id="chatInput" type="text" autocomplete="off" data-i18n-placeholder="chat.placeholder" />
+        <button id="chatSend" class="c-send" type="button" data-i18n="chat.send"></button>
+      </div>
+    </aside>
+
     <script src="./theme.js?v=3"></script>
     <script src="./i18n.js?v=3"></script>
     <script src="./app.js?v=3"></script>

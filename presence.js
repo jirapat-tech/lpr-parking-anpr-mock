@@ -1,7 +1,8 @@
 /**
  * Live presence — who else has this page open, and which listener they are
  * pointed at. Two people firing at the same desktop app produce one interleaved
- * log, which is the actual problem this solves.
+ * log, which is the actual problem this solves. Clicking someone opens a direct
+ * message with them (see chat.js).
  *
  * Entirely optional: with presence.config.js left blank nothing here runs, no
  * network request is made, and the Supabase SDK is never even fetched. That
@@ -11,6 +12,9 @@
  * ephemeral, held in the channel, and cleared automatically when a tab closes —
  * so there is no stale-row cleanup to get wrong.
  */
+
+import { escapeHtml } from "./escape.js"
+import { initChat, openChat, unreadFor, unreadTotal } from "./chat.js"
 
 const SDK = "https://esm.sh/@supabase/supabase-js@2"
 
@@ -46,8 +50,14 @@ if (!enabled) {
 }
 
 async function start() {
-  let channel
-  let others = []
+  /**
+   * Stable for the life of this tab and used as the DM address, so it is held
+   * here rather than read back off the channel — reaching into channel internals
+   * for it was fragile, and the self-filter that depended on it could drop a
+   * genuine peer who happened to share a name and target.
+   */
+  const myKey = crypto.randomUUID()
+  let peers = []
 
   const { createClient } = await import(SDK)
   const client = createClient(config.url, config.anonKey, {
@@ -56,6 +66,7 @@ async function start() {
   })
 
   const me = () => ({
+    key: myKey,
     name: myName() || "anonymous",
     target: targetOf(document.getElementById("url")?.value ?? ""),
     at: Date.now(),
@@ -63,51 +74,51 @@ async function start() {
 
   const render = () => {
     el.wrap.hidden = false
-    const total = others.length + (sharing() ? 1 : 0)
-    el.count.textContent = String(total)
+    const total = peers.length + (sharing() ? 1 : 0)
+    const unread = unreadTotal()
+    el.count.textContent = unread ? `${total} · ${unread}` : String(total)
     el.wrap.classList.toggle("live", total > 1)
+    el.wrap.classList.toggle("unread", unread > 0)
 
-    el.list.innerHTML = others.length
-      ? others
-          .map(
-            (person) =>
-              `<li><span class="p-name">${escapeHtml(person.name)}</span><span class="p-target">${escapeHtml(
-                person.target || "—"
-              )}</span></li>`
-          )
+    el.list.innerHTML = peers.length
+      ? peers
+          .map((person) => {
+            const n = unreadFor(person.key)
+            return `<li><button class="p-peer" data-peer="${escapeHtml(person.key)}" data-name="${escapeHtml(
+              person.name
+            )}"><span class="p-name">${escapeHtml(person.name)}</span><span class="p-target">${escapeHtml(
+              person.target || "—"
+            )}</span>${n ? `<span class="p-badge">${n}</span>` : ""}</button></li>`
+          })
           .join("")
       : `<li class="p-none">${escapeHtml(t("presence.alone"))}</li>`
+
+    el.list.querySelectorAll("[data-peer]").forEach((button) => {
+      button.onclick = () => {
+        openChat(button.dataset.peer, button.dataset.name)
+        el.panel.hidden = true
+      }
+    })
   }
 
   const push = () => {
-    if (!channel) return
     // Untracking removes the entry for everyone else immediately.
     if (sharing()) void channel.track(me())
     else void channel.untrack()
     render()
   }
 
-  channel = client.channel(`presence:${config.room ?? "anpr-mock"}`, {
-    config: { presence: { key: crypto.randomUUID() } },
+  const channel = client.channel(`presence:${config.room ?? "anpr-mock"}`, {
+    config: { presence: { key: myKey } },
   })
 
   channel.on("presence", { event: "sync" }, () => {
     const state = channel.presenceState()
-    others = Object.entries(state)
-      .filter(([key]) => key !== channel.params?.config?.presence?.key)
+    peers = Object.entries(state)
+      // Our own key is the only reliable way to exclude ourselves.
+      .filter(([key]) => key !== myKey)
       .flatMap(([, entries]) => entries)
-      .filter((entry) => entry.at && entry.name)
-    // The channel echoes our own entry back; drop it by identity, not by key,
-    // so a reconnect under a new key does not show us to ourselves.
-    const mine = me()
-    let skipped = false
-    others = others.filter((person) => {
-      if (!skipped && person.name === mine.name && person.target === mine.target) {
-        skipped = true
-        return false
-      }
-      return true
-    })
+      .filter((entry) => entry.key && entry.name)
     render()
   })
 
@@ -118,7 +129,10 @@ async function start() {
   // ── wiring ────────────────────────────────────────────────────────────────
 
   // Language can change after presence has rendered; re-render the list text.
+  // Set before initChat, which wraps this hook to re-render the open thread too.
   window.onPresenceLang = render
+
+  initChat({ client, myKey, myName: () => me().name, onUnreadChange: render })
 
   el.name.value = myName()
   el.share.checked = sharing()
@@ -148,11 +162,4 @@ async function start() {
   })
 
   window.addEventListener("beforeunload", () => void channel.untrack())
-}
-
-function escapeHtml(value) {
-  return String(value ?? "").replace(
-    /[&<>"]/g,
-    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]
-  )
 }
