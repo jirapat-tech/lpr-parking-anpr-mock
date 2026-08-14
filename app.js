@@ -283,15 +283,19 @@ const checkEnv = () => {
   try {
     target = new URL($("url").value)
   } catch {
-    el.hidden = true
+    el.className = "warn hidden"
     return
   }
 
   const isLocal = ["localhost", "127.0.0.1", "[::1]"].includes(target.hostname)
   const blocked = location.protocol === "https:" && target.protocol === "http:" && !isLocal
 
-  el.hidden = !blocked
-  if (blocked) el.innerHTML = t("warn.mixed", { origin: esc(target.origin) })
+  if (!blocked) {
+    el.className = "warn hidden"
+    return
+  }
+  el.className = "warn"
+  el.innerHTML = t("warn.mixed", { origin: esc(target.origin) })
 }
 
 // ─── picture list ──────────────────────────────────────────────────────────
@@ -312,30 +316,22 @@ const renderPids = () => {
     ? t("hint.attached", { n: images.size, total: pids.length })
     : t("hint.noPictures")
 
-  const rows = pids
-    .map((entry) => {
-      const file = images.get(entry.pId)
-      // Filename leads because it is what the developer recognises; the pId is
-      // what the listener matches on, so it stays visible but subordinate.
-      const second = file
-        ? `${esc(file.name)} · ${Math.round(file.size / 1024)} KB`
-        : `<span class="pic-id missing">${esc(t("hint.notAttached"))}</span>`
-      return `<div class="pic">
-        <span class="pic-thumb" id="thumb-${esc(entry.pId)}">${file ? "" : "—"}</span>
-        <span class="pic-body">
-          <span class="pic-name">${esc(entry.fileName || t("pid.noFileName"))}</span>
-          <span class="pic-id" title="${esc(entry.pId)}">${file ? second : esc(entry.pId)}</span>
-          ${file ? `<span class="pic-id">${second}</span>` : ""}
-        </span>
-        <span class="pic-act">
-          <label class="pick">${file ? t("btn.replace") : t("btn.pick")}<input type="file" accept="image/*" data-pick="${esc(entry.pId)}" /></label>
-          ${file ? `<button class="link" type="button" data-clear="${esc(entry.pId)}">${esc(t("btn.clear"))}</button>` : ""}
-        </span>
-      </div>`
-    })
-    .join("")
-
-  wrap.innerHTML = rows || `<p class="none">${esc(t("empty.nothing"))}</p>`
+  wrap.innerHTML =
+    pids
+      .map((entry) => {
+        const file = images.get(entry.pId)
+        return `<div class="pid">
+          <div class="thumb${file ? "" : " empty"}" id="thumb-${esc(entry.pId)}">${file ? "" : "—"}</div>
+          <div class="pid-body">
+            <div class="pid-name">${esc(entry.fileName || t("pid.noFileName"))}</div>
+            <div class="pid-id">${esc(entry.pId)}</div>
+            ${file ? `<div class="pid-file">${esc(file.name)} · ${Math.round(file.size / 1024)} KB</div>` : ""}
+          </div>
+          <label class="btn-file">${file ? t("btn.replace") : t("btn.pick")}<input type="file" accept="image/*" data-pick="${esc(entry.pId)}" /></label>
+          ${file ? `<button class="ghost" type="button" data-clear="${esc(entry.pId)}">${t("btn.clear")}</button>` : ""}
+        </div>`
+      })
+      .join("") || `<div class="empty-box">${esc(t("empty.nothing"))}</div>`
 
   wrap.querySelectorAll("[data-pick]").forEach((input) => {
     input.onchange = () => {
@@ -363,11 +359,7 @@ const renderPids = () => {
     const img = new Image()
     img.onload = () => URL.revokeObjectURL(url)
     img.src = url
-    const slot = $(`thumb-${entry.pId}`)
-    if (slot) {
-      slot.textContent = ""
-      slot.appendChild(img)
-    }
+    $(`thumb-${entry.pId}`)?.appendChild(img)
   })
 }
 
@@ -434,7 +426,7 @@ const renderHistory = () => {
           </div>`
         })
         .join("")
-    : `<p class="none">${esc(t("empty.history"))}</p>`
+    : `<div class="empty-box">${esc(t("empty.history"))}</div>`
 
   $("history")
     .querySelectorAll("[data-restore]")
@@ -470,17 +462,11 @@ const buildForm = (xml, pids) => {
   return { form, missing }
 }
 
-/**
- * The dot plus a short headline carry the outcome; the pre carries the detail.
- * Splitting them means the answer to "did it land?" is readable at a glance and
- * does not compete with a response body.
- *
- * state: "ok" | "err" | "warn" | "busy" | null
- */
-const report = (state, headline, detail = "") => {
-  $("state").className = "state" + (state ? ` ${state}` : "")
-  $("stateText").textContent = headline
-  $("result").textContent = detail
+/** state: "ok" | "err" | "warn" | undefined (neutral). */
+const report = (text, state) => {
+  const el = $("result")
+  el.textContent = text
+  el.className = "result " + (state ?? "")
 }
 
 /**
@@ -502,27 +488,23 @@ const fire = async () => {
   const { form, missing } = buildForm(xml, parsePids(xml))
   const note = missing.length ? t("msg.noPicture", { ids: missing.join(", ") }) : ""
   const readResponse = $("readResponse").checked
-  const mode = readResponse ? "cors" : "no-cors"
   const startedAt = Date.now()
 
   $("fire").disabled = true
-  report("busy", t("msg.firing", { mode }))
-
-  const took = () => `${Date.now() - startedAt}ms`
+  report(t("msg.firing", { mode: readResponse ? "cors" : "no-cors" }))
 
   try {
     if (readResponse) {
       const response = await fetch(url, { method: "POST", body: form })
       const body = await response.text()
       report(
-        response.ok ? "ok" : "err",
-        `${response.status} ${response.statusText} · ${took()}`,
-        `${note}${note ? "\n\n" : ""}${body.slice(0, 8000)}`
+        `${response.status} ${response.statusText} · ${Date.now() - startedAt}ms${note}\n\n${body.slice(0, 8000)}`,
+        response.ok ? "ok" : "err"
       )
       remember(`${response.status}`)
     } else {
       await fetch(url, { method: "POST", body: form, mode: "no-cors" })
-      report("ok", `${t("msg.deliveredShort")} · ${took()} · ${mode}`, t("msg.delivered", { ms: took(), note }))
+      report(t("msg.delivered", { ms: Date.now() - startedAt, note }), "ok")
       remember("delivered")
     }
   } catch (error) {
@@ -530,14 +512,10 @@ const fire = async () => {
     // from "never arrived", so it must not be painted as a failure — the request
     // very likely did land. Only a no-cors rejection is a real delivery failure.
     if (readResponse) {
-      report("warn", `${t("msg.blocked")} · ${took()}`, `${note}${note ? "\n\n" : ""}${t("msg.failedCors")}`)
+      report(`${t("msg.blocked")} · ${Date.now() - startedAt}ms${note}\n\n${t("msg.failedCors")}`, "warn")
       remember("blocked?")
     } else {
-      report(
-        "err",
-        `${t("msg.failed")} · ${took()}`,
-        `${note}${note ? "\n\n" : ""}${error.message}\n\n${t("msg.failedConn")}`
-      )
+      report(`${t("msg.failed")} · ${Date.now() - startedAt}ms${note}\n\n${error.message}\n\n${t("msg.failedConn")}`, "err")
       remember("failed")
     }
   } finally {
@@ -568,7 +546,6 @@ fieldsFromXml()
 renderPids()
 renderHistory()
 checkEnv()
-report(null, t("status.idle"))
 
 /** Called by applyLang: the parts built in JS are not covered by data-i18n. */
 const onLangChange = () => {
@@ -613,10 +590,5 @@ $("clearHistory").onclick = () => writeHistory([])
 $("readResponse").onchange = () => localStorage.setItem("anpr-read-response", $("readResponse").checked ? "1" : "")
 $("curl").onclick = async () => {
   await navigator.clipboard.writeText(curlCommand())
-  report(null, t("msg.copied"), t("msg.curlCopied") + curlCommand())
+  report(t("msg.curlCopied") + curlCommand())
 }
-
-// The loop is edit → fire → read the log, so the primary action needs a key.
-document.addEventListener("keydown", (event) => {
-  if ((event.metaKey || event.ctrlKey) && event.key === "Enter" && !$("fire").disabled) fire()
-})

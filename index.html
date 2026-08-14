@@ -4,110 +4,95 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>ANPR Mock</title>
-    <link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><rect x="1" y="4" width="14" height="8" rx="1.5" fill="none" stroke="%232f5fd0" stroke-width="1.5"/><path d="M4.5 8h1.5M7.25 8h1.5M10 8h1.5" stroke="%232f5fd0" stroke-width="1.5" stroke-linecap="round"/></svg>' />
     <link rel="stylesheet" href="./styles.css" />
+    <!-- Set the theme before first paint so dark mode never flashes white. -->
     <script>
       document.documentElement.dataset.theme = localStorage.getItem("anpr-theme") || "light"
     </script>
   </head>
   <body>
-    <!-- Toolbar: the target and the primary action, always in reach. -->
-    <header class="bar">
-      <span class="brand">ANPR<em>mock</em></span>
-
-      <label class="sr" for="url" data-i18n="label.url"></label>
-      <input id="url" class="target" type="text" spellcheck="false" autocomplete="off" />
-
-      <button id="fire" class="primary" type="button" data-i18n="btn.fire"></button>
-      <button id="curl" class="quiet" type="button" data-i18n="btn.curl"></button>
-
-      <span class="bar-sep" aria-hidden="true"></span>
-
+    <header>
+      <h1 data-i18n="app.title">ANPR Mock</h1>
+      <span class="sub" data-i18n="app.sub"></span>
+      <nav>
+        <a class="active" href="./index.html" data-i18n="nav.app"></a>
+        <a href="./help.html" data-i18n="nav.help"></a>
+      </nav>
       <!-- Hidden entirely unless presence.config.js is filled in. -->
       <span id="presence" class="presence" hidden>
         <button class="p-toggle" type="button">
-          <i class="dot"></i><span id="presenceCount">1</span>
+          <i class="p-dot"></i><span id="presenceCount">1</span>
           <span class="p-word" data-i18n="presence.online"></span>
         </button>
         <div id="presencePanel" class="p-panel" hidden>
           <ul id="presenceList" class="p-list"></ul>
           <div class="p-me">
-            <label class="sr" for="presenceName" data-i18n="presence.yourName"></label>
+            <label class="sr-only" for="presenceName" data-i18n="presence.yourName"></label>
             <input id="presenceName" type="text" maxlength="24" data-i18n-placeholder="presence.yourName" />
-            <label class="check"><input id="presenceShare" type="checkbox" /><span data-i18n="presence.share"></span></label>
+            <label class="p-check"><input id="presenceShare" type="checkbox" /><span data-i18n="presence.share"></span></label>
           </div>
           <p class="p-note" data-i18n="presence.note"></p>
         </div>
       </span>
-
-      <a class="tab" href="./help.html" data-i18n="nav.help"></a>
-      <select id="lang" class="quiet-select" aria-label="Language"></select>
-      <button id="theme" class="quiet icon" type="button" title="light / dark">☀</button>
+      <select id="lang" class="lang"></select>
+      <button id="theme" class="icon" type="button" title="light / dark">☀</button>
     </header>
 
-    <div id="warn" class="notice" hidden></div>
+    <div id="warn" class="warn hidden"></div>
 
-    <div class="work">
-      <!-- Left: what the developer edits between fires. -->
-      <aside class="side">
-        <section class="grp">
-          <h2 class="grp-h" data-i18n="label.request"></h2>
-          <div class="field">
-            <label for="plate" data-i18n="label.plate"></label>
-            <input id="plate" type="text" spellcheck="false" autocomplete="off" />
-          </div>
-          <div class="field">
-            <label for="province" data-i18n="label.province"></label>
-            <select id="province"></select>
-            <p class="sub" id="stateHint"></p>
-          </div>
-        </section>
+    <main>
+      <section>
+        <label for="url" data-i18n="label.url"></label>
+        <input id="url" type="text" spellcheck="false" />
+      </section>
 
-        <section class="grp">
-          <h2 class="grp-h">
-            <span data-i18n="label.pictures"></span>
-            <span class="grp-meta" id="pidHint"></span>
-          </h2>
-          <div id="pids"></div>
-        </section>
+      <section class="row2">
+        <div>
+          <label for="plate" data-i18n="label.plate"></label>
+          <input id="plate" type="text" spellcheck="false" />
+        </div>
+        <div>
+          <label for="province"><span data-i18n="label.province"></span> <span class="hint" id="stateHint"></span></label>
+          <select id="province"></select>
+        </div>
+      </section>
 
-        <section class="grp grp-last">
-          <h2 class="grp-h">
-            <span data-i18n="label.history"></span>
-            <span class="grp-meta" id="historyHint"></span>
-            <button id="clearHistory" class="link" type="button" data-i18n="btn.clearHistory"></button>
-          </h2>
-          <div id="history"></div>
-        </section>
-      </aside>
+      <section>
+        <label for="xml">
+          <span data-i18n="label.xml"></span>
+          <button id="resetXml" class="link" type="button" data-i18n="btn.reset"></button>
+          <button id="downloadXml" class="link" type="button" data-i18n="btn.download"></button>
+        </label>
+        <textarea id="xml" spellcheck="false" rows="18"></textarea>
+      </section>
 
-      <!-- Right: the payload, and what came back. -->
-      <main class="panes">
-        <section class="pane">
-          <div class="pane-h">
-            <h2 data-i18n="label.xml"></h2>
-            <div class="pane-act">
-              <button id="resetXml" class="link" type="button" data-i18n="btn.reset"></button>
-              <button id="downloadXml" class="link" type="button" data-i18n="btn.download"></button>
-            </div>
-          </div>
-          <textarea id="xml" spellcheck="false" wrap="off"></textarea>
-        </section>
+      <section>
+        <label><span data-i18n="label.pictures"></span> <span class="hint" id="pidHint"></span></label>
+        <div id="pids"></div>
+      </section>
 
-        <section class="pane pane-res">
-          <div class="pane-h">
-            <h2 data-i18n="label.result"></h2>
-            <span class="state" id="state" role="status" aria-live="polite">
-              <i class="dot" id="stateDot"></i><span id="stateText">—</span>
-            </span>
-            <label class="pane-act check" data-i18n-title="check.readResponse.title">
-              <input id="readResponse" type="checkbox" /><span data-i18n="check.readResponse"></span>
-            </label>
-          </div>
-          <pre id="result" class="result"></pre>
-        </section>
-      </main>
-    </div>
+      <section class="actions">
+        <button id="fire" type="button" data-i18n="btn.fire"></button>
+        <button id="curl" class="ghost" type="button" data-i18n="btn.curl"></button>
+        <label class="check" data-i18n-title="check.readResponse.title">
+          <input id="readResponse" type="checkbox" /> <span data-i18n="check.readResponse"></span>
+        </label>
+      </section>
+
+      <section>
+        <label data-i18n="label.result"></label>
+        <pre id="result" class="result">—</pre>
+      </section>
+
+      <section>
+        <label>
+          <span data-i18n="label.history"></span>
+          <span class="hint" id="historyHint"></span>
+          <button id="clearHistory" class="link" type="button" data-i18n="btn.clearHistory"></button>
+        </label>
+        <div id="history"></div>
+      </section>
+    </main>
 
     <script src="./theme.js"></script>
     <script src="./i18n.js"></script>
