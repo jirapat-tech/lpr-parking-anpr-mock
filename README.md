@@ -124,10 +124,14 @@ with no way to tell whose event is whose.
 It is disabled until `presence.config.js` is filled in. Left blank, nothing runs
 and no external request is made at all; the Supabase SDK is not even fetched.
 
-To enable, create a Supabase project (free tier), turn on Realtime, and paste the
-project URL and **anon** key into `presence.config.js`. Realtime Presence is used
-rather than a table, so the state is ephemeral and clears itself when a tab
-closes — there are no stale rows to clean up.
+To enable, create a Supabase project (free tier) and paste its URL and **anon**
+key into `presence.config.js`. Nothing needs switching on: Presence runs on a
+public Realtime channel and touches no database table, so there is no schema, no
+replication setting, and no stale rows to clean up — state lives in the channel
+and clears itself when a tab closes.
+
+The one setting that breaks it is *private-only channels* under Project Settings
+→ Realtime; leave that off.
 
 **Before you enable it:** GitHub Pages serves this site publicly even when the
 repository is private. Anyone who finds the URL can join the channel and read
