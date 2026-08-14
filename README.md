@@ -135,6 +135,13 @@ every name and `host:port` being broadcast, including internal addresses. Treat
 what you broadcast as public, or leave presence off. Each person can also untick
 *show me to others* to stay out of it.
 
+## Deploying a change
+
+Asset URLs carry a `?v=N`. **Bump it in both `index.html` and `help.html` whenever
+you change a JS or CSS file**, otherwise a browser can pair a freshly-fetched
+`index.html` with a cached `app.js` from the previous deploy — which throws
+rather than degrading, because the two disagree about what elements exist.
+
 ## Deploy
 
 GitHub Pages → Settings → Pages → Deploy from branch → `main` / `/ (root)`.
