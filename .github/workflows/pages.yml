@@ -1,0 +1,78 @@
+name: Deploy to Pages
+
+# Deploying through Actions rather than straight from the branch buys two things
+# a plain branch deploy cannot do: the Supabase values are injected at deploy
+# time instead of living in git, and the cache-busting version is stamped from
+# the commit SHA so nobody has to remember to bump it by hand.
+#
+# NOTE: this does NOT make the key secret. The built page is public, so anyone
+# can read it from the deployed JS. Only ever put the **publishable** key here —
+# never the secret key.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Let a running deploy finish rather than cancelling it half-published.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Inject presence config
+        env:
+          # Repository *variables*, not secrets — the value is public by design,
+          # and variables stay readable in the UI so it is obvious what shipped.
+          SUPABASE_URL: ${{ vars.SUPABASE_URL }}
+          SUPABASE_PUBLISHABLE_KEY: ${{ vars.SUPABASE_PUBLISHABLE_KEY }}
+          PRESENCE_ROOM: ${{ vars.PRESENCE_ROOM }}
+        run: |
+          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_PUBLISHABLE_KEY" ]; then
+            echo "::notice::SUPABASE_URL / SUPABASE_PUBLISHABLE_KEY not set — presence stays disabled."
+            exit 0
+          fi
+
+          case "$SUPABASE_PUBLISHABLE_KEY" in
+            sb_secret_*|*service_role*)
+              echo "::error::That looks like a SECRET key. It bypasses Row Level Security and this page is public. Use the publishable key."
+              exit 1
+              ;;
+          esac
+
+          cat > presence.config.js <<EOF
+          // Generated at deploy time from repository variables — do not edit.
+          window.PRESENCE_CONFIG = {
+            url: "$SUPABASE_URL",
+            anonKey: "$SUPABASE_PUBLISHABLE_KEY",
+            room: "${PRESENCE_ROOM:-anpr-mock}",
+          }
+          EOF
+          echo "presence enabled for ${SUPABASE_URL}"
+
+      # Filenames never change on this site, so without this a browser can pair
+      # a fresh index.html with a cached app.js from the previous deploy.
+      - name: Stamp cache-busting version
+        run: |
+          sed -i -E "s/\?v=[A-Za-z0-9]+/?v=${GITHUB_SHA:0:8}/g" index.html help.html
+          grep -o '?v=[A-Za-z0-9]*' index.html | sort -u
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+      - id: deployment
+        uses: actions/deploy-pages@v4

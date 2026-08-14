@@ -2,6 +2,14 @@
  * Presence is OFF until this is filled in — the page works exactly as before
  * with the fields left blank, so nothing here is required to use the tool.
  *
+ * ON THE DEPLOYED SITE THIS FILE IS OVERWRITTEN. The Pages workflow regenerates
+ * it from the repository variables SUPABASE_URL / SUPABASE_PUBLISHABLE_KEY, so
+ * the values never live in git. Edit the variables in
+ * Settings → Secrets and variables → Actions → Variables, not this file.
+ *
+ * Filling it in here only affects your local copy. To keep local values without
+ * git seeing them: git update-index --skip-worktree presence.config.js
+ *
  * To enable: create a Supabase project (free tier) and paste its URL and
  * publishable key below. Nothing needs switching on — Realtime Presence works out
  * of the box on a public channel, and no database table is involved.
@@ -29,7 +37,8 @@
  * page purely local.
  */
 window.PRESENCE_CONFIG = {
-    url: 'https://xxxxx.supabase.co',
-    anonKey: 'sb_publishable_Em4didR1ycZQvoKOp954MQ_0Nn5saXo',
-    room: 'anpr-mock',
-};
+  url: "",
+  anonKey: "",
+  /** Everyone in the same room sees each other. Change it to split teams. */
+  room: "anpr-mock",
+}

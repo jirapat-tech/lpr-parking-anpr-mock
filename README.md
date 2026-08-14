@@ -124,10 +124,25 @@ with no way to tell whose event is whose.
 It is disabled until `presence.config.js` is filled in. Left blank, nothing runs
 and no external request is made at all; the Supabase SDK is not even fetched.
 
-To enable, create a Supabase project (free tier) and paste its URL and
-**publishable** key (`sb_publishable_…`, labelled *anon / public* in older
-dashboards) into `presence.config.js`. Never the **Secret** key — it bypasses Row
-Level Security and this file is served publicly. Nothing needs switching on: Presence runs on a
+To enable, create a Supabase project (free tier) and set two **repository
+variables** — Settings → Secrets and variables → Actions → Variables:
+
+| Variable | Value |
+| --- | --- |
+| `SUPABASE_URL` | `https://xxxxx.supabase.co` |
+| `SUPABASE_PUBLISHABLE_KEY` | `sb_publishable_…` (labelled *anon / public* in older dashboards) |
+| `PRESENCE_ROOM` | optional; defaults to `anpr-mock` |
+
+The Pages workflow regenerates `presence.config.js` from those at deploy time, so
+the values stay out of git and can be rotated without a commit. The workflow
+refuses to build if the value looks like a **Secret** key — that one bypasses Row
+Level Security and this page is public.
+
+Variables rather than secrets on purpose: the key is public by design once the
+page ships, so hiding it in the Actions UI would only make it harder to see what
+is actually deployed. Nothing here is secret — it is configuration.
+
+Leaving the variables unset simply keeps presence disabled. Nothing needs switching on: Presence runs on a
 public Realtime channel and touches no database table, so there is no schema, no
 replication setting, and no stale rows to clean up — state lives in the channel
 and clears itself when a tab closes.
@@ -143,12 +158,16 @@ what you broadcast as public, or leave presence off. Each person can also untick
 
 ## Deploying a change
 
-Asset URLs carry a `?v=N`. **Bump it in both `index.html` and `help.html` whenever
-you change a JS or CSS file**, otherwise a browser can pair a freshly-fetched
-`index.html` with a cached `app.js` from the previous deploy — which throws
-rather than degrading, because the two disagree about what elements exist.
+Push to `main`. The Pages workflow stamps every asset URL with the commit SHA, so
+the `?v=` in the repo is only a placeholder and never needs bumping by hand.
+
+That stamp is load-bearing: filenames never change here, so without it a browser
+can pair a freshly-fetched `index.html` with a cached `app.js` from the previous
+deploy — which throws rather than degrading, because the two disagree about what
+elements exist.
 
 ## Deploy
 
-GitHub Pages → Settings → Pages → Deploy from branch → `main` / `/ (root)`.
-`.nojekyll` is present so files are served as-is.
+Settings → Pages → Source: **GitHub Actions**. The workflow in
+`.github/workflows/pages.yml` handles the rest. `.nojekyll` is present so files
+are served as-is.
