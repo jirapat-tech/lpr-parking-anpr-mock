@@ -2,6 +2,7 @@
 
 Web page that fires a Hikvision-style ANPR webhook at a camera listener
 endpoint: an editable `anpr.xml` plus one uploaded image per `<pId>` in the XML.
+A second tab fires a Zenith plate result (see [Zenith](#zenith)).
 
 Static — no build, no dependencies. Thai / English / Japanese, light and dark.
 
@@ -55,6 +56,37 @@ edits flow both ways.
 
 Hand-editing `<tailandStateID>` to a value outside the table is allowed; the
 field just reports it as unknown rather than overwriting your XML.
+
+## Zenith
+
+The **Zenith** tab (`zenith.html`) fires a Zenith plate result
+(`cs_alarm_plate`) at `/api/v1/zenith/listener/<device-id>`. The body follows
+`AlarmInfoPlateEvent` in lpr-parking-web
+(`electron-app/src/device-integration/api/camera/zenith-http/v8.10.1.202509120/types/events/`);
+the default JSON is the captured RA5 sample from its tests, minus the pictures.
+
+- **License plate** writes `PlateResult.license` and `plates[0].license`.
+- **Province** writes the Thai name into `plates[0].license_ext2` — Zenith sends
+  a name, not a code. The Thai column of the province table matches
+  `THAI_PROVINCE_CODE_BY_NAME` exactly.
+- **Pictures**: `imageFile` (full frame) and `imageFragmentFile` (plate crop),
+  base64'd into the JSON on fire. Both optional.
+- **Send heartbeat** fires `cs_dev_reg` as multipart fields (`serialno`,
+  `ipaddr`, …), taken from the JSON. `pass_wd` is never sent.
+
+A real camera posts `application/json`, which a browser cannot send
+cross-origin without a CORS preflight the listener does not answer (and
+`no-cors` drops the Content-Type). **Fire** therefore sends the same object as
+`multipart/form-data` with bracketed field names
+(`AlarmInfoPlate[result][PlateResult][license]`); the listener route runs
+`multer().none()` after `express.json()`, which folds them back into the same
+nested object. Values arrive as strings and empty arrays are dropped — the
+desktop app reads neither.
+
+multer caps each field at 1 MB, so a picture over ~768 KB is refused before
+sending. For large pictures or the byte-exact camera request, **download**
+`zenith.json` (pictures included) and use **Copy as curl**, which posts it as
+`application/json`.
 
 ## Reaching your machine
 

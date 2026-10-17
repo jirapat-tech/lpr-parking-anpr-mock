@@ -67,7 +67,7 @@ jobs:
       # a fresh index.html with a cached app.js from the previous deploy.
       - name: Stamp cache-busting version
         run: |
-          sed -i -E "s/\?v=[A-Za-z0-9]+/?v=${GITHUB_SHA:0:8}/g" index.html help.html
+          sed -i -E "s/\?v=[A-Za-z0-9]+/?v=${GITHUB_SHA:0:8}/g" index.html help.html zenith.html
           grep -o '?v=[A-Za-z0-9]*' index.html | sort -u
 
       - uses: actions/configure-pages@v5

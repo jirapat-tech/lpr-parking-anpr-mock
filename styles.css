@@ -214,6 +214,15 @@ button.link:hover {
 .pid-file {
   color: var(--ok);
 }
+.pid-file.err {
+  color: var(--err);
+  white-space: normal;
+}
+p.transport {
+  margin: -8px 0 18px;
+  font-size: 11px;
+  line-height: 1.6;
+}
 
 .btn-file {
   display: inline-block;

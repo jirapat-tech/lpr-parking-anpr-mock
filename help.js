@@ -179,6 +179,28 @@ const HELP = {
        ส่วนรูปต้องมีไฟล์ชื่อตรงกับใน command อยู่ในโฟลเดอร์เดียวกัน</p>`,
     ],
     [
+      "Zenith",
+      `<p>แท็บ <b>Zenith</b> ยิง plate result (<code>cs_alarm_plate</code>) แบบกล้อง Zenith เข้า listener:</p>
+       <pre>http://localhost:8080/api/v1/zenith/listener/&lt;device-id&gt;</pre>
+       <ul>
+         <li><b>ทะเบียนรถ</b> เขียนลง <code>PlateResult.license</code> และ <code>plates[0].license</code></li>
+         <li><b>จังหวัด</b> เขียน<b>ชื่อภาษาไทย</b>ลง <code>plates[0].license_ext2</code> (Zenith ไม่ส่งรหัส)
+             ฝั่ง app แปลงเป็นรหัส 1–78 ด้วยตารางเดียวกับ Hikvision ชื่อที่ไม่มีในตารางจะถูกเก็บเป็นชื่อ fallback</li>
+         <li><b>รูปภาพ</b> มี 2 ช่อง: <code>imageFile</code> (ภาพเต็ม) กับ <code>imageFragmentFile</code> (ภาพป้าย)
+             แปลงเป็น base64 ใส่ใน JSON ตอนยิง ไม่แนบก็ได้</li>
+         <li><b>ส่ง heartbeat</b> ยิง <code>cs_dev_reg</code> (multipart fields: <code>serialno</code>, <code>ipaddr</code>, …)
+             ทำให้กล้องขึ้นสถานะออนไลน์ ไม่ส่ง <code>pass_wd</code></li>
+       </ul>
+       <p><b>ทำไมปุ่มยิงไม่ส่ง JSON ตรงๆ:</b> กล้องจริงส่ง <code>application/json</code>
+       แต่ browser ส่ง JSON ข้าม origin ต้องผ่าน CORS preflight ซึ่ง listener ไม่ตอบ และโหมด no-cors จะตัด Content-Type ทิ้ง
+       ปุ่มยิงเลยส่ง <code>multipart/form-data</code> ที่ชื่อ field เป็น
+       <code>AlarmInfoPlate[result][PlateResult][license]</code> แทน — route ของ listener มี <code>multer().none()</code>
+       ซึ่งประกอบกลับเป็น object เดียวกัน (ค่าทุกตัวกลายเป็น string, array ว่างหายไป ซึ่ง app ไม่ได้ใช้)</p>
+       <p class="note">multer รับค่าต่อ field ได้ไม่เกิน 1 MB — รูปที่ base64 แล้วเกิน (~768 KB ขึ้นไป) จะไม่ยิงให้
+       ให้ย่อรูป หรือกด <b>ดาวน์โหลด</b> เอา <code>zenith.json</code> (มีรูปในตัว) แล้วใช้ <b>คัดลอกเป็น curl</b>
+       ซึ่งส่ง JSON แบบกล้องจริงเป๊ะ</p>`,
+    ],
+    [
       "แก้ปัญหา",
       `<div class="scroll"><table>
         <thead><tr><th>อาการ</th><th>สาเหตุ</th></tr></thead>
@@ -291,6 +313,29 @@ const HELP = {
        files must sit in the same folder under the names in the command.</p>`,
     ],
     [
+      "Zenith",
+      `<p>The <b>Zenith</b> tab fires a Zenith plate result (<code>cs_alarm_plate</code>) at the listener:</p>
+       <pre>http://localhost:8080/api/v1/zenith/listener/&lt;device-id&gt;</pre>
+       <ul>
+         <li><b>License plate</b> writes <code>PlateResult.license</code> and <code>plates[0].license</code>.</li>
+         <li><b>Province</b> writes the <b>Thai name</b> into <code>plates[0].license_ext2</code> (Zenith sends no code).
+             The app maps it to 1–78 with the same table as Hikvision; an unknown name is kept as a fallback name.</li>
+         <li><b>Pictures</b> are two slots, <code>imageFile</code> (full frame) and <code>imageFragmentFile</code>
+             (plate crop), base64'd into the JSON on fire. Both optional.</li>
+         <li><b>Send heartbeat</b> fires <code>cs_dev_reg</code> (multipart fields: <code>serialno</code>, <code>ipaddr</code>, …),
+             which marks the camera online. No <code>pass_wd</code> is sent.</li>
+       </ul>
+       <p><b>Why Fire does not send JSON:</b> a real camera posts <code>application/json</code>, but a browser
+       can only send that cross-origin after a CORS preflight the listener does not answer, and no-cors mode drops
+       the Content-Type. So Fire sends <code>multipart/form-data</code> with fields named
+       <code>AlarmInfoPlate[result][PlateResult][license]</code> instead — the listener route runs
+       <code>multer().none()</code>, which rebuilds the same object (every value becomes a string and empty
+       arrays vanish; the app reads neither).</p>
+       <p class="note">multer caps each field at 1 MB, so a picture over ~768 KB (once base64'd) is refused before
+       sending. Shrink it, or <b>download</b> <code>zenith.json</code> (pictures included) and use <b>Copy as curl</b>,
+       which sends the exact camera JSON.</p>`,
+    ],
+    [
       "Troubleshooting",
       `<div class="scroll"><table>
         <thead><tr><th>Symptom</th><th>Cause</th></tr></thead>
@@ -397,6 +442,28 @@ const HELP = {
       `<p><b>curl としてコピー</b> なら、ブラウザの制約（mixed content、CORS）を一切受けません。</p>
        <p>先に <b>ダウンロード</b> で <code>anpr.xml</code> を保存し、そのフォルダで curl を実行してください。
        画像もコマンド内の名前で同じフォルダに置く必要があります。</p>`,
+    ],
+    [
+      "Zenith",
+      `<p><b>Zenith</b> タブは Zenith カメラの plate result（<code>cs_alarm_plate</code>）を listener に送信します:</p>
+       <pre>http://localhost:8080/api/v1/zenith/listener/&lt;device-id&gt;</pre>
+       <ul>
+         <li><b>ナンバープレート</b> は <code>PlateResult.license</code> と <code>plates[0].license</code> に書き込みます。</li>
+         <li><b>県</b> は <b>タイ語の県名</b> を <code>plates[0].license_ext2</code> に書き込みます（Zenith はコードを送りません）。
+             app 側で Hikvision と同じ表を使って 1–78 に変換します。表にない名前はフォールバック名として保存されます。</li>
+         <li><b>画像</b> は <code>imageFile</code>（全体）と <code>imageFragmentFile</code>（プレート）の 2 枠で、
+             送信時に base64 で JSON に埋め込みます。どちらも任意です。</li>
+         <li><b>heartbeat 送信</b> は <code>cs_dev_reg</code>（multipart フィールド: <code>serialno</code>, <code>ipaddr</code>, …）を送り、
+             カメラをオンラインにします。<code>pass_wd</code> は送りません。</li>
+       </ul>
+       <p><b>送信ボタンが JSON を送らない理由:</b> 実機は <code>application/json</code> で送りますが、ブラウザがクロスオリジンで
+       JSON を送るには CORS preflight が必要で、listener は応答しません。no-cors モードでは Content-Type が落とされます。
+       そのため送信ボタンは <code>AlarmInfoPlate[result][PlateResult][license]</code> という名前のフィールドで
+       <code>multipart/form-data</code> を送ります。listener のルートの <code>multer().none()</code> が同じオブジェクトに
+       組み立て直します（値はすべて文字列になり、空配列は消えますが、app はどちらも使いません）。</p>
+       <p class="note">multer は 1 フィールド 1 MB までです。base64 後に超える画像（約 768 KB 以上）は送信前に拒否します。
+       画像を縮小するか、<b>ダウンロード</b> で <code>zenith.json</code>（画像込み）を保存し <b>curl としてコピー</b> を使ってください。
+       こちらは実機と同じ JSON を送ります。</p>`,
     ],
     [
       "トラブルシューティング",

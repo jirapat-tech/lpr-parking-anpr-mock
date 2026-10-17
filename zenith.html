@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="th">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ANPR Mock — Zenith</title>
+    <link rel="stylesheet" href="./styles.css?v=3" />
+    <!-- Set the theme before first paint so dark mode never flashes white. -->
+    <script>
+      document.documentElement.dataset.theme = localStorage.getItem("anpr-theme") || "light"
+    </script>
+  </head>
+  <body>
+    <header>
+      <h1 data-i18n="app.title">ANPR Mock</h1>
+      <span class="sub" data-i18n="zenith.sub"></span>
+      <nav>
+        <a href="./index.html" data-i18n="nav.app"></a>
+        <a class="active" href="./zenith.html" data-i18n="nav.zenith"></a>
+        <a href="./help.html" data-i18n="nav.help"></a>
+      </nav>
+      <!-- Hidden entirely unless presence.config.js is filled in. -->
+      <span id="presence" class="presence" hidden>
+        <button class="p-toggle" type="button">
+          <i class="p-dot"></i><span id="presenceCount">1</span>
+          <span class="p-word" data-i18n="presence.online"></span>
+        </button>
+        <div id="presencePanel" class="p-panel" hidden>
+          <ul id="presenceList" class="p-list"></ul>
+          <div class="p-me">
+            <label class="sr-only" for="presenceName" data-i18n="presence.yourName"></label>
+            <input id="presenceName" type="text" maxlength="24" data-i18n-placeholder="presence.yourName" />
+            <label class="p-check"><input id="presenceShare" type="checkbox" /><span data-i18n="presence.share"></span></label>
+          </div>
+          <p class="p-note" data-i18n="presence.note"></p>
+        </div>
+      </span>
+      <select id="lang" class="lang"></select>
+      <button id="theme" class="icon" type="button" title="light / dark">☀</button>
+    </header>
+
+    <div id="warn" class="warn hidden"></div>
+
+    <main>
+      <section>
+        <label for="url" data-i18n="label.url"></label>
+        <input id="url" type="text" spellcheck="false" />
+      </section>
+
+      <section class="row2">
+        <div>
+          <label for="plate" data-i18n="label.plate"></label>
+          <input id="plate" type="text" spellcheck="false" />
+        </div>
+        <div>
+          <label for="province"><span data-i18n="label.province"></span> <span class="hint" id="stateHint"></span></label>
+          <select id="province"></select>
+        </div>
+      </section>
+
+      <section>
+        <label for="json">
+          <span data-i18n="label.json"></span>
+          <span class="hint" id="jsonHint"></span>
+          <button id="resetJson" class="link" type="button" data-i18n="btn.reset"></button>
+          <button id="downloadJson" class="link" type="button" data-i18n="btn.download"></button>
+        </label>
+        <textarea id="json" spellcheck="false" rows="22"></textarea>
+      </section>
+
+      <section>
+        <label><span data-i18n="label.pictures"></span> <span class="hint" id="pidHint"></span></label>
+        <div id="pids"></div>
+      </section>
+
+      <section class="actions">
+        <button id="fire" type="button" data-i18n="btn.fire"></button>
+        <button id="heartbeat" class="ghost" type="button" data-i18n="btn.heartbeat"></button>
+        <button id="curl" class="ghost" type="button" data-i18n="btn.curl"></button>
+        <label class="check" data-i18n-title="check.readResponse.title">
+          <input id="readResponse" type="checkbox" /> <span data-i18n="check.readResponse"></span>
+        </label>
+      </section>
+      <p class="hint transport" data-i18n="zenith.transport"></p>
+
+      <section>
+        <label data-i18n="label.result"></label>
+        <pre id="result" class="result">—</pre>
+      </section>
+
+      <section>
+        <label>
+          <span data-i18n="label.history"></span>
+          <span class="hint" id="historyHint"></span>
+          <button id="clearHistory" class="link" type="button" data-i18n="btn.clearHistory"></button>
+        </label>
+        <div id="history"></div>
+      </section>
+    </main>
+
+    <!-- Direct message dock. Hidden until a person is picked from presence. -->
+    <aside id="chat" class="chat" hidden>
+      <div class="c-head">
+        <span class="c-dot"></span>
+        <strong id="chatPeer"></strong>
+        <button id="chatClose" class="c-x" type="button" aria-label="close">×</button>
+      </div>
+      <div id="chatLog" class="c-log"></div>
+      <div id="chatTyping" class="c-typing" aria-live="polite"></div>
+      <div class="c-input">
+        <label class="sr-only" for="chatInput" data-i18n="chat.placeholder"></label>
+        <input id="chatInput" type="text" autocomplete="off" data-i18n-placeholder="chat.placeholder" />
+        <button id="chatSend" class="c-send" type="button" data-i18n="chat.send"></button>
+      </div>
+    </aside>
+
+    <script src="./theme.js?v=3"></script>
+    <script src="./i18n.js?v=3"></script>
+    <script src="./common.js?v=3"></script>
+    <script src="./zenith.js?v=3"></script>
+    <script src="./presence.config.js?v=3"></script>
+    <script type="module" src="./presence.js?v=3"></script>
+  </body>
+</html>
