@@ -459,7 +459,7 @@ $("downloadXml").onclick = () => {
   a.click()
   URL.revokeObjectURL(url)
 }
-$("fire").onclick = fire
+initLoop(fire)
 $("clearHistory").onclick = () => writeHistory([])
 $("readResponse").onchange = () => localStorage.setItem("anpr-read-response", $("readResponse").checked ? "1" : "")
 $("curl").onclick = async () => {

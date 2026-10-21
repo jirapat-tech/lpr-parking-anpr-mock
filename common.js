@@ -134,3 +134,61 @@ const report = (text, state) => {
   el.textContent = text
   el.className = "result " + (state ?? "")
 }
+
+// ─── loop ──────────────────────────────────────────────────────────────────
+
+/** Count field: 0 = forever, blank or junk = once. */
+const loopCount = () => {
+  const raw = $("loopCount").value.trim()
+  const n = Math.floor(Number(raw))
+  return raw === "" || !Number.isFinite(n) ? 1 : Math.max(0, n)
+}
+
+/**
+ * Fire runs `fireOnce` loopCount() times (0 = until Stop), waiting the gap
+ * between requests — after one finishes, never overlapping. Stop also cuts the
+ * current wait short. Settings persist across both pages.
+ */
+const initLoop = (fireOnce) => {
+  let stop = null
+
+  for (const id of ["loopCount", "loopGap"]) {
+    const saved = localStorage.getItem(`anpr-${id}`)
+    if (saved !== null) $(id).value = saved
+    $(id).oninput = () => localStorage.setItem(`anpr-${id}`, $(id).value)
+  }
+
+  $("stop").onclick = () => stop?.()
+  $("fire").onclick = async () => {
+    if (stop) return
+    const count = loopCount()
+    const gap = Math.max(0, Number($("loopGap").value) || 0)
+    let stopped = false
+    let wake
+    stop = () => {
+      stopped = true
+      wake?.()
+    }
+    $("fire").classList.add("hidden")
+    $("stop").classList.remove("hidden")
+
+    let done = 0
+    try {
+      while (!stopped && (count === 0 || done < count)) {
+        $("loopStatus").textContent = t("loop.progress", { i: done + 1, total: count || "∞" })
+        await fireOnce()
+        done++
+        if (stopped || done === count) break
+        await new Promise((resolve) => {
+          wake = resolve
+          setTimeout(resolve, gap)
+        })
+      }
+    } finally {
+      stop = null
+      $("fire").classList.remove("hidden")
+      $("stop").classList.add("hidden")
+      $("loopStatus").textContent = count === 1 ? "" : t(stopped ? "loop.stopped" : "loop.done", { n: done })
+    }
+  }
+}

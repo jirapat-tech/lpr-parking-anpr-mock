@@ -536,7 +536,7 @@ $("resetJson").onclick = () => {
   fieldsFromJson()
 }
 $("downloadJson").onclick = downloadJson
-$("fire").onclick = fire
+initLoop(fire)
 $("heartbeat").onclick = heartbeat
 $("clearHistory").onclick = () => writeHistory([])
 $("readResponse").onchange = () => localStorage.setItem("anpr-read-response", $("readResponse").checked ? "1" : "")

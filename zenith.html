@@ -73,8 +73,15 @@
         <div id="pids"></div>
       </section>
 
+      <section class="actions loop">
+        <label class="check"><span data-i18n="label.loopCount"></span> <input id="loopCount" type="number" min="0" step="1" value="1" /></label>
+        <label class="check"><span data-i18n="label.loopGap"></span> <input id="loopGap" type="number" min="0" step="100" value="1000" /></label>
+        <span class="hint" id="loopStatus"></span>
+      </section>
+
       <section class="actions">
         <button id="fire" type="button" data-i18n="btn.fire"></button>
+        <button id="stop" class="hidden" type="button" data-i18n="btn.stop"></button>
         <button id="heartbeat" class="ghost" type="button" data-i18n="btn.heartbeat"></button>
         <button id="curl" class="ghost" type="button" data-i18n="btn.curl"></button>
         <label class="check" data-i18n-title="check.readResponse.title">

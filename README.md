@@ -33,6 +33,10 @@ nothing happens. Suspect Debug mode first.
 4. Attach an image per picture. Missing ones are omitted, not faked.
 5. **Fire request.**
 
+**Repeat** fires the same request N times (`0` = until **Stop**), waiting the
+**gap** in ms after each one finishes — requests never overlap. Both settings
+are shared by the Hikvision and Zenith pages.
+
 Everything persists across reloads: the URL, XML, language, theme and the last
 50 fires in `localStorage`, the pictures in IndexedDB. The history list records
 plate, province, picture count and delivery outcome, and **reuse** puts a past
